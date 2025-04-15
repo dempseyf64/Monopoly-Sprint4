@@ -3,7 +3,7 @@ Monopoly Project For CSCI 234.
 
 Authors: Finn Dempsey, Kristian Wright, Collin Cabral-Castro, Rachele Grigoli
 
-[**BurnDown Chart**](https://moravian0-my.sharepoint.com/:x:/g/personal/wrightk_moravian_edu/EYr0nc55eU5Crc-SL6Qc2WEBqKtaUUfoWnwiVYXO8xEwbg?e=1Oinfl)
+[**BurnDown Chart**]([https://moravian0-my.sharepoint.com/:x:/g/personal/wrightk_moravian_edu/EYr0nc55eU5Crc-SL6Qc2WEBqKtaUUfoWnwiVYXO8xEwbg?e=1Oinfl](https://moravian0-my.sharepoint.com/:x:/r/personal/wrightk_moravian_edu/_layouts/15/Doc.aspx?sourcedoc=%7BD96C6FCF-2A17-4040-85E6-C65A43D59F78%7D&file=Sprint4-Backlog-Burndown-Chart.xlsx&action=default&mobileredirect=true&DefaultItemOpen=1&wdOrigin=SEARCHENGINE.GOOGLE%2CAPPHOME-WEB.FILEBROWSER.RECENT&wdPreviousSession=d2e6e8fa-200d-4099-9004-ab6fc8fe656e&wdPreviousSessionSrc=AppHomeWeb&ct=1744724749686))
 
 
 This project is a digital implementation of the classic Monopoly board game, developed as part of the CSCI 234 course. The project includes a fully functional game board, player management, property handling, and a graphical user interface (GUI) for user interaction.
