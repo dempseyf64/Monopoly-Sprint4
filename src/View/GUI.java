@@ -18,6 +18,7 @@ public class GUI extends JFrame {
     private JPanel gameBoardPanel;
     private  JTabbedPane tabbedPane;
     private final String[] selectedPlayerTokens;
+
     /**
      * Initialization of GUI JPanel named gameBoardPanel
      */
@@ -48,11 +49,6 @@ public class GUI extends JFrame {
         for (int i = 0; i < playerNames.length; i++) {
             tabbedPane.addTab(playerNames[i], new PlayerPanel(playerNames[i], playerTokens[i]));
         }
-
-        // tabbedPane.addTab("Player 1", new PlayerPanel("Stacy"));
-        // tabbedPane.addTab("Player 2", new PlayerPanel("Alex"));
-        // tabbedPane.addTab("Player 3", new PlayerPanel("Jamie"));
-        // tabbedPane.addTab("Player 4", new PlayerPanel("Jordan"));
 
 
         add(gameBoardPanel, BorderLayout.CENTER);
@@ -98,22 +94,6 @@ public class GUI extends JFrame {
             setBackground(Color.WHITE);
             setLayout(null);
 
-            //Initialize and add JLabel
-            JLabel goSpace = new JLabel("GO");
-            goSpace.setBounds(702, 722, 100, 30);
-            add(goSpace);
-
-            JLabel jailSpace = new JLabel("JAIL");
-            jailSpace.setBounds(42, 722, 100, 30);
-            add(jailSpace);
-
-            JLabel parkingSpace = new JLabel("PARKING");
-            parkingSpace.setBounds(30, 66, 100, 30);
-            add(parkingSpace);
-
-            JLabel goToJailSpace = new JLabel("GO TO JAIL");
-            goToJailSpace.setBounds(679, 66, 100, 30);
-            add(goToJailSpace);
 
             JButton chanceCardDeck = new JButton("<html><center>Chance<br>Card</center></html>");
             chanceCardDeck.setBounds(140, 160, 90, 120);
@@ -131,33 +111,15 @@ public class GUI extends JFrame {
             communityChestDeck.setMargin(new Insets(0, -8, 0, 0));
             add(communityChestDeck);
 
-
-            // trial button for mediterranean avenue
-            // button is currently on first tile
-            // when pressed, property details will show
-            //
-            // at some point, I want to create a loop for creating all JButtons/Dialogs, linking to the
-            //GameBoard.java instantiations
-            JButton openMediteranneanAvenue = new JButton("<html><center>Mediterranean<br>Avenue</center></html>");
-            openMediteranneanAvenue.setBounds(589, 696, 82, 82);
-            openMediteranneanAvenue.setOpaque(true);
-            openMediteranneanAvenue.setBackground(new Color(153, 102, 51));// Brown color
-            openMediteranneanAvenue.setFont(new Font("Arial", Font.BOLD, 10));
-            openMediteranneanAvenue.setMargin(new Insets(0, -14, 0, 0)); // Reduce padding
-            add(openMediteranneanAvenue);
-
-            openMediteranneanAvenue.addActionListener(e -> {
-                JDialog mediterraneanAvenue = new JDialog();
-                mediterraneanAvenue.setTitle("Property Info");
-                mediterraneanAvenue.setSize(200, 150);
-                mediterraneanAvenue.setLocationRelativeTo(null); // Center the dialog
-
-                JLabel message = new JLabel("Hello, World!", SwingConstants.CENTER);
-                mediterraneanAvenue.add(message);
-
-                mediterraneanAvenue.setVisible(true);
-            });
-
+            int xBoundSpace = 720;
+            int yBoundSpace = 740;
+            int widthSpaceLarge = 90;
+            int widthSpaceSmall = 70;
+            int heightSpace = 90;
+            createLargeGameSpace(xBoundSpace, yBoundSpace, widthSpaceLarge, heightSpace);
+            xBoundSpace -= widthSpaceSmall;
+            createGameSpaces(xBoundSpace, yBoundSpace, widthSpaceSmall, heightSpace);
+            createLargeGameSpace(0, yBoundSpace, widthSpaceLarge, heightSpace);
 
             if (selectedPlayerTokens != null && selectedPlayerTokens.length > 0) {
                 List<String> tokenPNGNames = Arrays.asList("CarToken", "DogToken", "HatToken", "IronToken");
@@ -176,6 +138,48 @@ public class GUI extends JFrame {
             repaint();
         }
 
+        private void createGameSpaces(int xBoundSpace,int yBoundSpace,int widthSpace,int heightSpace) {
+            String[] spacesNames = {"Mediterranean<br>Avenue", "Community<br>Chest", "Baltic<br>Avenue", "Income<br>Tax",
+                    "Reading<br>Railroad", "Oriental<br>Avenue", "Chance", "Vermont<br>Avenue", "Connecticut<br>Avenue"};
+
+            for (int i = 0; i < 9; i++) {
+                JButton jbutton = new JButton("<html><center>"+spacesNames[i]+"</center></html>");
+                jbutton.setBounds(xBoundSpace, yBoundSpace, widthSpace, heightSpace);
+                jbutton.setOpaque(true);
+                jbutton.setBackground(new Color(153, 102, 51));// Brown color
+                jbutton.setFont(new Font("Arial", Font.BOLD, 10));
+                // jbutton.setMargin(new Insets(0, -14, 0, 0)); // Reduce padding
+                add(jbutton);
+                gameSpacesActionListener(jbutton);
+                xBoundSpace -= widthSpace;
+            }
+        }
+
+        private void createLargeGameSpace(int xBoundSpace,int yBoundSpace,int widthSpace,int heightSpace) {
+            JButton jbutton = new JButton("<html><center>GO</center></html>");
+            jbutton.setBounds(xBoundSpace, yBoundSpace, widthSpace, heightSpace);
+            jbutton.setOpaque(true);
+            // jbutton.setBackground(new Color(153, 102, 51));// Brown color
+            jbutton.setFont(new Font("Arial", Font.BOLD, 16));
+            add(jbutton);
+            gameSpacesActionListener(jbutton);
+        }
+
+        private void gameSpacesActionListener(JButton spaceName) {
+            spaceName.addActionListener(e -> {
+                JDialog spaceNameJDialog = new JDialog();
+                spaceNameJDialog.setTitle("Property Info");
+                spaceNameJDialog.setSize(200, 150);
+                spaceNameJDialog.setLocationRelativeTo(null); // Center the dialog
+
+                JLabel message = new JLabel("Hello, World!", SwingConstants.CENTER);
+                spaceNameJDialog.add(message);
+
+                spaceNameJDialog.setVisible(true);
+            });
+        }
+
+        /**
         // outline for gameboard tiles.
         @Override
         protected void paintComponent(Graphics g) {
@@ -209,6 +213,8 @@ public class GUI extends JFrame {
                 g2D.drawRect(x - (i * SQUARE_SIZE), y, SQUARE_SIZE, SQUARE_SIZE);
             }
         }
+        */
+
     }
 
     private void addToken(String pngName, int xOffset, int yOffset, int tokenWidth) {
@@ -226,84 +232,6 @@ public class GUI extends JFrame {
         add(tokenLabel);
     }
 
-
-    /**
-     * JPanel that shows gamestate, including:
-     * - player state (name, buttons, etc. [anything else to add at the moment?])
-     *      -> each player has their own set of buttons
-     *      -> can change playerCount final int
-     *      -> currently has a temporary playerName List
-     */
-    /**
-    class GameStatePanel extends JPanel {
-
-        final int playerCount = 4;
-        List<String> playerNames = Arrays.asList("Stacy", "Alex", "Jamie", "Jordan");
-
-        public GameStatePanel() {
-            setPreferredSize(new Dimension(700, 500));
-            setBackground(new Color(217, 233, 211)); // light green
-            setLayout(null);
-
-            int x = 50;
-            int y = 60;
-            for (int i = 0; i < playerCount; i++) {
-                String[] buttonLabels = {
-                        "Role Dice", "Draw Card", "Purchase Property", "Purchase House", "End Turn"
-                };
-                for (String label : buttonLabels) {
-                    add(createButton(label, x, y));
-                    x += 120; // next button's positioning
-                }
-                JLabel name = new JLabel(playerNames.get(i));
-                name.setFont(new Font("Arial", Font.BOLD, 16));
-                name.setBounds(30, y - 38, 300, 30);
-                add(name);
-
-                x = 50; // resetting x value
-                y += 200; // next row of button's positioning
-            }
-
-            revalidate();
-            repaint();
-        }
-
-        private JButton createButton(String text, int x, int y) {
-            JButton button = new JButton(text);
-            button.setBounds(x, y, 120, 20);
-            button.setFont(new Font("Arial", Font.BOLD, 12));
-
-            if (text.equals("Role Dice")) {
-                button.addActionListener(e -> {
-                    int roll = (int) (Math.random() * 6) + 1;
-                    JOptionPane.showMessageDialog(this, "You rolled a " + roll + "!");
-                });
-            }
-
-            return button;
-        }
-
-        @Override
-        protected void paintComponent(Graphics g) {
-            super.paintComponent(g);
-            Graphics2D g2D = (Graphics2D) g;
-            g2D.setPaint(Color.BLACK);
-            g2D.setStroke(new BasicStroke(2));
-
-            int boxWidth = getWidth() - 60;
-            int boxHeight = 150;
-            int x = 30;
-            int y = 50;
-
-            for (int i = 0; i < playerCount; i++) {
-                g2D.drawRect(x, y, boxWidth, boxHeight);
-                g2D.drawLine(x, y + 40, boxWidth + 30, y + 40);
-                y += boxHeight + 50;
-            }
-        }
-
-    }
-        */
 
 
     public static void main(String[] args) {
