@@ -1,4 +1,4 @@
-# Monopoly-Project Sprint 3
+# Monopoly-Project Sprint 4
 Monopoly Project For CSCI 234. 
 
 Authors: Finn Dempsey, Kristian Wright, Collin Cabral-Castro, Rachele Grigoli
