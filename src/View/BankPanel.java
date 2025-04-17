@@ -1,9 +1,9 @@
 /**
  * BankPanel.java
- *
+
  * This class represents the bank panel in the Monopoly game GUI.
  * It displays the bank's properties and allows players to view details about them.
- *
+
  * Authored by Collin Cabral-Castro
  */
 

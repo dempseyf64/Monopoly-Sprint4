@@ -3,7 +3,7 @@
  *
  * This class represents a space on the game board that allows players to draw a Community Chest card.
  *
- * Remodeled by Finn Dempsey
+ * Remodeled by Finn Dempsey Created by Kristian Wright
  */
 package Model;
 

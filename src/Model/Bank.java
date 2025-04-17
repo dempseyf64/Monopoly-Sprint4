@@ -1,13 +1,4 @@
 /**
- * Class Created by Collin Castro supported by Kristian Wright
- */
-package Model;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Scanner;
-
-/**
  * The Bank is responsible for:
  *  - Holding and selling unowned properties
  *  - Managing houses and hotels
@@ -15,11 +6,19 @@ import java.util.Scanner;
  *  - Paying players for passing GO or other earnings
  *  - Auctioning properties
  *  - Handling mortgages
+ *
+ * Created by Collin Cabral-Castro, Refactored and Remodeled by Kristian Wright
  */
+package Model;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Scanner;
+
 public class Bank {
 
     private static final int INITIAL_HOUSES = 32;
-    private static final int INITIAL_HOTELS = 32;
+    private static final int INITIAL_HOTELS = 12;
 
     private int housesRemaining;
     private int hotelsRemaining;
@@ -36,9 +35,11 @@ public class Bank {
         this.hotelsRemaining = INITIAL_HOTELS;
         this.unownedProperties = new ArrayList<>();
 
-        for (Property p : allProperties) {
-            if (p.isOwned()) {
-                unownedProperties.add(p);
+        if (allProperties != null) {
+            for (Property p : allProperties) {
+                if (!p.isOwned()) {
+                    unownedProperties.add(p);
+                }
             }
         }
     }
@@ -58,8 +59,10 @@ public class Bank {
      * @param amount The amount of money to give.
      */
     public void payPlayer(Player player, int amount) {
-        player.setMoney(player.getMoney() + amount);
-        System.out.println("Bank pays " + player.getName() + " $" + amount);
+        if (player != null && amount > 0) {
+            player.setMoney(player.getMoney() + amount);
+            System.out.println("Bank pays " + player.getName() + " $" + amount);
+        }
     }
 
     /**
@@ -69,8 +72,10 @@ public class Bank {
      * @param amount The amount of money to collect.
      */
     public void collectFromPlayer(Player player, int amount) {
-        player.setMoney(player.getMoney() - amount);
-        System.out.println("Bank collects $" + amount + " from " + player.getName());
+        if (player != null && amount > 0) {
+            player.setMoney(player.getMoney() - amount);
+            System.out.println("Bank collects $" + amount + " from " + player.getName());
+        }
     }
 
     /**
@@ -80,15 +85,16 @@ public class Bank {
      * @param buyer The player buying the property.
      */
     public void sellProperty(Property property, Player buyer) {
-        if (property.isOwned()) {
+        if (property != null && buyer != null && unownedProperties.contains(property)) {
             if (buyer.getMoney() >= property.getPrice()) {
                 property.buy(buyer);
                 unownedProperties.remove(property);
+                System.out.println(buyer.getName() + " bought " + property.getName() + " for $" + property.getPrice());
             } else {
                 System.out.println(buyer.getName() + " cannot afford " + property.getName());
             }
         } else {
-            System.out.println(property.getName() + " is already owned.");
+            System.out.println("Property is either already owned or invalid.");
         }
     }
 
@@ -99,26 +105,29 @@ public class Bank {
      * @param players The list of players participating in the auction.
      */
     public void auctionProperty(Property property, List<Player> players) {
+        if (property == null || players == null || players.isEmpty()) {
+            System.out.println("Invalid property or players for auction.");
+            return;
+        }
+
         unownedProperties.remove(property);
         System.out.println("Starting auction for " + property.getName() + " (Price: $" + property.getPrice() + ")");
         Scanner scanner = new Scanner(System.in);
         int highestBid = 0;
         Player highestBidder = null;
 
-        for (Player p : players) {
-            if (p.getMoney() <= 0) {
-                continue;
-            }
-
-            System.out.println(p.getName() + ", enter your bid (0 to skip): ");
-            int bid = 0;
-            try {
-                bid = Integer.parseInt(scanner.nextLine());
-            } catch (NumberFormatException ignored) {}
-
-            if (bid > highestBid && bid <= p.getMoney()) {
-                highestBid = bid;
-                highestBidder = p;
+        for (Player player : players) {
+            if (player.getMoney() > 0) {
+                System.out.println(player.getName() + ", enter your bid (0 to skip): ");
+                try {
+                    int bid = Integer.parseInt(scanner.nextLine());
+                    if (bid > highestBid && bid <= player.getMoney()) {
+                        highestBid = bid;
+                        highestBidder = player;
+                    }
+                } catch (NumberFormatException e) {
+                    System.out.println("Invalid bid. Skipping...");
+                }
             }
         }
 
@@ -138,15 +147,12 @@ public class Bank {
      * @param owner The owner of the property.
      */
     public void mortgageProperty(Property property, Player owner) {
-        if (property.getOwner() != owner) {
-            System.out.println("Cannot mortgage property you don't own!");
-            return;
+        if (property != null && owner != null && property.getOwner() == owner && !property.isMortgaged()) {
+            property.mortgage();
+            System.out.println(owner.getName() + " mortgaged " + property.getName());
+        } else {
+            System.out.println("Cannot mortgage property.");
         }
-        if (property.isMortgaged()) {
-            System.out.println(property.getName() + " is already mortgaged.");
-            return;
-        }
-        property.mortgage();
     }
 
     /**
@@ -156,15 +162,12 @@ public class Bank {
      * @param owner The owner of the property.
      */
     public void unmortgageProperty(Property property, Player owner) {
-        if (property.getOwner() != owner) {
-            System.out.println("Cannot unmortgage property you don't own!");
-            return;
+        if (property != null && owner != null && property.getOwner() == owner && property.isMortgaged()) {
+            property.unmortgage();
+            System.out.println(owner.getName() + " unmortgaged " + property.getName());
+        } else {
+            System.out.println("Cannot unmortgage property.");
         }
-        if (!property.isMortgaged()) {
-            System.out.println(property.getName() + " is not mortgaged.");
-            return;
-        }
-        property.unmortgage();
     }
 
     public void printBankStatus() {

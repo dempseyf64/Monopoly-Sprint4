@@ -1,32 +1,43 @@
-/*
- * PropertySpace.java
+/**
+ * The PropertySpace class represents a property space on the Monopoly game board.
+ * It extends the Property class and includes additional fields for rent calculations
+ * based on the number of houses or hotels on the property.
  *
- * This class represents a property space on the board in a Monopoly-like game.
- * It includes attributes for pricing, rent calculation, and ownership.
- *
- * Created by Kristian Wright Modified by Collin Cabral-Castro
+ * Created by Kristian Wright
  */
 package Model;
 
-public class PropertySpace extends Space {
-    private final int price;
-    private final int propertySite;
-    private final int propertySiteWithColorSet;
-    private final int costWithOneHouse;
-    private final int costWithTwoHouses;
-    private final int costWithThreeHouses;
-    private final int costWithFourHouses;
-    private final int costWithHotel;
-    private final int mortgageValue;
-    private final int costOfHouseHotel;
-    private Player owner;
-    private final Bank bank;
+public class PropertySpace extends Property {
+    private final int propertySite; // Base rent for the property
+    private final int propertySiteWithColorSet; // Rent with a color set
+    private final int costWithOneHouse; // Rent with one house
+    private final int costWithTwoHouses; // Rent with two houses
+    private final int costWithThreeHouses; // Rent with three houses
+    private final int costWithFourHouses; // Rent with four houses
+    private final int costWithHotel; // Rent with a hotel
 
+    /**
+     * Constructs a PropertySpace with the specified attributes.
+     *
+     * @param name                     The name of the property.
+     * @param location                 The location of the property on the board.
+     * @param color                    The color group of the property.
+     * @param price                    The purchase price of the property.
+     * @param propertySite             The base rent for the property.
+     * @param propertySiteWithColorSet The rent with a color set.
+     * @param costWithOneHouse         The rent with one house.
+     * @param costWithTwoHouses        The rent with two houses.
+     * @param costWithThreeHouses      The rent with three houses.
+     * @param costWithFourHouses       The rent with four houses.
+     * @param costWithHotel            The rent with a hotel.
+     * @param mortgageValue            The mortgage value of the property.
+     * @param costOfHouseHotel         The cost of building a house or hotel.
+     * @param bank                     The bank managing the property.
+     */
     public PropertySpace(String name, int location, String color, int price, int propertySite, int propertySiteWithColorSet,
                          int costWithOneHouse, int costWithTwoHouses, int costWithThreeHouses, int costWithFourHouses,
                          int costWithHotel, int mortgageValue, int costOfHouseHotel, Bank bank) {
-        super(name);
-        this.price = price;
+        super(name, price, color, bank);
         this.propertySite = propertySite;
         this.propertySiteWithColorSet = propertySiteWithColorSet;
         this.costWithOneHouse = costWithOneHouse;
@@ -34,52 +45,39 @@ public class PropertySpace extends Space {
         this.costWithThreeHouses = costWithThreeHouses;
         this.costWithFourHouses = costWithFourHouses;
         this.costWithHotel = costWithHotel;
-        this.mortgageValue = mortgageValue;
-        this.costOfHouseHotel = costOfHouseHotel;
-        this.bank = bank;
-        this.owner = null; // Initially unowned
     }
 
+    /**
+     * Handles the action when a player lands on this property.
+     *
+     * @param player The player landing on the property.
+     */
     @Override
     public void landOn(Player player) {
-        if (owner == null) {
-            System.out.println(player.getName() + " landed on " + name + " which is unowned.");
-        } else if (owner != player) {
+        if (getOwner() == null) {
+            System.out.println(player.getName() + " landed on " + getName() + " which is unowned.");
+        } else if (getOwner() != player) {
             int rent = calculateRent();
-            bank.collectFromPlayer(player, rent);
-            bank.payPlayer(owner, rent);
-            System.out.println(player.getName() + " landed on " + name + " and paid $" + rent + " rent to " + owner.getName());
+            getBank().collectFromPlayer(player, rent);
+            getBank().payPlayer(getOwner(), rent);
+            System.out.println(player.getName() + " landed on " + getName() + " and paid $" + rent + " rent to " + getOwner().getName());
         } else {
-            System.out.println(player.getName() + " landed on their own property " + name + ".");
+            System.out.println(player.getName() + " landed on their own property " + getName() + ".");
         }
     }
 
+    /**
+     * Calculates the rent for this property based on its state.
+     *
+     * @return The calculated rent.
+     */
+    @Override
     public int calculateRent() {
-        // Example rent calculation logic using the fields
         return propertySite + propertySiteWithColorSet + costWithOneHouse + costWithTwoHouses + costWithThreeHouses + costWithFourHouses + costWithHotel;
     }
 
-    public void buy(Player player) {
-        if (owner == null) {
-            owner = player;
-            bank.collectFromPlayer(player, price);
-            System.out.println(player.getName() + " bought " + name + " for $" + price);
-        }
-    }
+    // Getter methods for the additional fields
 
-    public boolean isOwned() {
-        return owner != null;
-    }
-
-    public Player getOwner() {
-        return owner;
-    }
-
-    public int getPrice() {
-        return price;
-    }
-
-    // Getter methods for the fields
     public int getPropertySite() {
         return propertySite;
     }
@@ -106,13 +104,5 @@ public class PropertySpace extends Space {
 
     public int getCostWithHotel() {
         return costWithHotel;
-    }
-
-    public int getMortgageValue() {
-        return mortgageValue;
-    }
-
-    public int getCostOfHouseHotel() {
-        return costOfHouseHotel;
     }
 }

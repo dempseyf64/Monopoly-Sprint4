@@ -1,10 +1,10 @@
 /**
  * GameActionsPanel.java
- *
+
  * This class represents a panel in the GUI that contains buttons for various game actions.
  * It allows players to interact with the game by performing actions such as rolling dice,
  * starting trades, mortgaging properties, buying houses/hotels, and ending their turn.
- *
+
  * Authored by Collin Cabral-Castro
  */
 

@@ -1,10 +1,10 @@
 /**`
  * CommunityChestCard.java
- *
+
  * This class represents a Community Chest card in the Monopoly game.
  * Each card has a description and an effect that is applied to a player.
  * The class also provides methods to initialize and shuffle the deck of cards.
- *
+
  * Created by: ... modified by Collin Cabral-Castro
  */
 package Model;

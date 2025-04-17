@@ -5,19 +5,18 @@ package Model;
  * Each property has a name, price, base rent, color group, and ownership status.
  * This class extends the Space class and implements the logic for buying properties,
  * paying rent, mortgaging, and unmortgaging.
-
+ *
  * Created by Kristian Wright modified by Collin Cabral-Castro
  */
-
 public class Property extends Space {
-    final private String name;
-    final private int price;
-    final private int baseRent;
-    final private String colorGroup;
+    private final String name;
+    private final int price;
+    private final int baseRent;
+    private final String colorGroup;
     private Player owner;
     private boolean mortgaged;
-    private final int houseCount;
-    private final boolean hasHotel;
+    private int houseCount;
+    private boolean hasHotel;
     private final Bank bank;
 
     /**
@@ -26,6 +25,7 @@ public class Property extends Space {
      * @param name The name of the property.
      * @param price The price of the property.
      * @param colorGroup The color group of the property.
+     * @param bank The bank managing the property transactions.
      */
     public Property(String name, int price, String colorGroup, Bank bank) {
         super(name); // Assuming Space has a constructor that takes a name
@@ -59,7 +59,7 @@ public class Property extends Space {
         if (this.owner == null) {
             this.owner = player;
             bank.collectFromPlayer(player, this.price);
-            player.addProperty(this); // Ensure Player class has this method
+            player.addProperty(this);
             System.out.println(player.getName() + " bought " + this.name);
         } else {
             System.out.println(this.name + " is already owned.");
@@ -71,7 +71,7 @@ public class Property extends Space {
      *
      * @param player The player paying the rent.
      */
-    public void payRent(Player player, Bank bank) {
+    public void payRent(Player player) {
         if (this.owner != null && this.owner != player && !this.mortgaged) {
             int rentAmount = calculateRent();
             bank.collectFromPlayer(player, rentAmount);
@@ -119,7 +119,7 @@ public class Property extends Space {
      * @return True if the property is owned, false otherwise.
      */
     public boolean isOwned() {
-        return owner == null;
+        return owner != null;
     }
 
     /**
@@ -129,6 +129,15 @@ public class Property extends Space {
      */
     public Player getOwner() {
         return owner;
+    }
+
+    /**
+     * Sets the owner of the property.
+     *
+     * @param owner The new owner of the property.
+     */
+    public void setOwner(Player owner) {
+        this.owner = owner;
     }
 
     /**
@@ -168,48 +177,48 @@ public class Property extends Space {
     }
 
     /**
-     * Gets the cost with three houses.
+     * Gets the number of houses on the property.
      *
-     * @return The cost with three houses.
+     * @return The number of houses on the property.
      */
-    public int getCostWithThreeHouses() {
-        return baseRent * 15;
+    public int getHouseCount() {
+        return houseCount;
     }
 
     /**
-     * Gets the cost with four houses.
+     * Sets the number of houses on the property.
      *
-     * @return The cost with four houses.
+     * @param houseCount The new number of houses.
      */
-    public int getCostWithFourHouses() {
-        return baseRent * 20;
+    public void setHouseCount(int houseCount) {
+        this.houseCount = houseCount;
     }
 
     /**
-     * Gets the cost with a hotel.
+     * Checks if the property has a hotel.
      *
-     * @return The cost with a hotel.
+     * @return True if the property has a hotel, false otherwise.
      */
-    public int getCostWithHotel() {
-        return baseRent * 50;
+    public boolean hasHotel() {
+        return hasHotel;
     }
 
     /**
-     * Gets the mortgage value.
+     * Sets whether the property has a hotel.
      *
-     * @return The mortgage value.
+     * @param hasHotel True if the property has a hotel, false otherwise.
      */
-    public int getMortgageValue() {
-        return price / 2;
+    public void setHasHotel(boolean hasHotel) {
+        this.hasHotel = hasHotel;
     }
 
     /**
-     * Gets the cost of house/hotel.
+     * Gets the bank managing the property.
      *
-     * @return The cost of house/hotel.
+     * @return The bank.
      */
-    public int getCostOfHouseHotel() {
-        return baseRent * 5;
+    public Bank getBank() {
+        return bank;
     }
 
     /**
@@ -229,23 +238,5 @@ public class Property extends Space {
         } else {
             System.out.println(player.getName() + " landed on their own property " + name + ".");
         }
-    }
-
-    /**
-     * Checks if the property has a hotel.
-     *
-     * @return True if the property has a hotel, false otherwise.
-     */
-    public boolean hasHotel() {
-        return hasHotel;
-    }
-
-    /**
-     * Gets the number of houses on the property.
-     *
-     * @return The number of houses on the property.
-     */
-    public int getHouseCount() {
-        return houseCount;
     }
 }
