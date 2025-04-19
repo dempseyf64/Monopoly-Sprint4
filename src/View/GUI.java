@@ -70,7 +70,7 @@ public class GUI extends JFrame {
         private final List<Space> spaces;
 
         public GameBoardPanel(String[] selectedPlayerTokens) {
-            setPreferredSize(new Dimension(900, 900));
+            // setPreferredSize(new Dimension(900, 900));
             setBackground(Color.WHITE);
             setLayout(null);
 
@@ -89,62 +89,84 @@ public class GUI extends JFrame {
         }
 
         private void addSpacesToBoard() {
-            int x = 0, y = 0;
+            int constant = 12; // change this number to change size of tiles
+            int CornerSpaceSize = 82 + constant; // width/height for Go, Jail, Free Parking, and Go to Jail spaces
+            int horizontalWidth = 60 + constant;
+            int horizontalHeight = 82 + constant;
+            int verticalWidth = 82 + constant;
+            int verticalHeight = 60 + constant;
 
-            for (int i = 0; i < 10; i++) {
-                addSpaceButton(spaces.get(i), x, y);
-                x += SQUARE_SIZE;
+            int x = 82 + constant;
+            int y = 0;
+
+            // Top row (0–9)
+            addSpaceButton(spaces.get(0), x - CornerSpaceSize, y, CornerSpaceSize, CornerSpaceSize); // GO
+            for (int i = 1; i < 10; i++) {
+                addSpaceButton(spaces.get(i), x, y, horizontalWidth, horizontalHeight);
+                x += horizontalWidth;
             }
+            addSpaceButton(spaces.get(10), x, y, CornerSpaceSize, CornerSpaceSize); // Jail
 
-            x -= SQUARE_SIZE;
-            y += SQUARE_SIZE;
-            for (int i = 10; i < 20; i++) {
-                addSpaceButton(spaces.get(i), x, y);
-                y += SQUARE_SIZE;
+            // Right column (11–19)
+            y += CornerSpaceSize;
+            for (int i = 11; i < 20; i++) {
+                addSpaceButton(spaces.get(i), x, y, verticalWidth, verticalHeight);
+                y += verticalHeight;
             }
+            addSpaceButton(spaces.get(20), x, y, CornerSpaceSize, CornerSpaceSize); // Free Parking
 
-            y -= SQUARE_SIZE;
-            x -= SQUARE_SIZE;
-            for (int i = 20; i < 30; i++) {
-                addSpaceButton(spaces.get(i), x, y);
-                x -= SQUARE_SIZE;
+            x += horizontalWidth;
+
+            // Bottom row (21–29)
+            x -= horizontalWidth;
+            for (int i = 21; i < 30; i++) {
+                x -= horizontalWidth;
+                addSpaceButton(spaces.get(i), x, y, horizontalWidth, horizontalHeight);
             }
+            addSpaceButton(spaces.get(30), x - CornerSpaceSize, y, CornerSpaceSize, CornerSpaceSize); // Go to Jail
 
-            x += SQUARE_SIZE;
-            y -= SQUARE_SIZE;
-            for (int i = 30; i < 40; i++) {
-                addSpaceButton(spaces.get(i), x, y);
-                y -= SQUARE_SIZE;
+            // Left column (31–39)
+            x -= CornerSpaceSize;
+            y -= verticalHeight;
+            for (int i = 31; i < 40; i++) {
+                addSpaceButton(spaces.get(i), x, y, verticalWidth, verticalHeight);
+                y -= verticalHeight;
             }
         }
 
-        private void addSpaceButton(Space space, int x, int y) {
+        private int[] colorSelection(String color) {
+            if (color.equalsIgnoreCase("Brown")) {
+                return new int[]{153, 102, 51};
+            } else if (color.equalsIgnoreCase("Light Blue")) {
+                return new int[]{173, 216, 230};
+            } else if (color.equalsIgnoreCase("Pink")) {
+                return new int[]{248, 24, 148};
+            } else if (color.equalsIgnoreCase("Orange")) {
+                return new int[]{255, 95, 31};
+            } else if (color.equalsIgnoreCase("Red")) {
+                return new int[]{255, 0, 0};
+            } else if (color.equalsIgnoreCase("Yellow")) {
+                return new int[]{255, 244, 79};
+            } else if (color.equalsIgnoreCase("Green")) {
+                return new int[]{0, 128, 0};
+            } else if (color.equalsIgnoreCase("Dark Blue")) {
+                return new int[]{0, 0, 139};
+            } else {
+                return new int[]{0, 0, 0}; //black
+            }
+        }
+
+        private void addSpaceButton(Space space, int x, int y, int width, int height) {
             JButton spaceButton = new JButton("<html><center>" + space.getName() + "</center></html>");
-            spaceButton.setBounds(x, y, SQUARE_SIZE, SQUARE_SIZE);
+            spaceButton.setBounds(x, y, width, height);
             spaceButton.setFont(new Font("Arial", Font.PLAIN, 10));
             spaceButton.setOpaque(true);
 
             if (space instanceof PropertySpace) {
-                spaceButton.setBackground(new Color(153, 102, 51)); // Brown for properties
+                String colorName = ((PropertySpace) space).getColorGroup(); // Inherited from Property
+                int[] rgb = colorSelection(colorName);
+                spaceButton.setBackground(new Color(rgb[0], rgb[1], rgb[2]));
                 spaceButton.setToolTipText("Property: " + space.getName());
-            } else if (space instanceof ChanceSpace) {
-                spaceButton.setBackground(new Color(255, 165, 0)); // Orange for chance
-                spaceButton.setToolTipText("Chance: Draw a card!");
-            } else if (space instanceof CommunityChestSpace) {
-                spaceButton.setBackground(new Color(255, 215, 0)); // Gold for community chest
-                spaceButton.setToolTipText("Community Chest: Draw a card!");
-            } else if (space instanceof TaxSpace) {
-                spaceButton.setBackground(new Color(255, 0, 0)); // Red for taxes
-                spaceButton.setToolTipText("Tax: Pay " + ((TaxSpace) space).getTaxAmount());
-            } else if (space instanceof RailroadSpace) {
-                spaceButton.setBackground(new Color(0, 0, 0)); // Black for railroads
-                spaceButton.setToolTipText("Railroad: " + space.getName());
-            } else if (space instanceof UtilitySpace) {
-                spaceButton.setBackground(new Color(0, 255, 255)); // Cyan for utilities
-                spaceButton.setToolTipText("Utility: " + space.getName());
-            } else {
-                spaceButton.setBackground(new Color(200, 200, 200)); // Default color
-                spaceButton.setToolTipText(space.getName());
             }
 
             spaceButton.addActionListener(e -> {
@@ -160,8 +182,8 @@ public class GUI extends JFrame {
         }
 
         private void addTokens(String[] selectedPlayerTokens) {
-            int[] xOffsets = {760, 760, 760, 760};
-            int[] yOffsets = {740, 710, 680, 650};
+            int[] xOffsets = {840, 840, 840, 840};
+            int[] yOffsets = {780, 750, 720, 690};
             int tokenWidth = 55;
 
             for (int i = 0; i < selectedPlayerTokens.length; i++) {
