@@ -27,8 +27,10 @@ public class GUI extends JFrame {
         String[] playerNames = {"Stacy", "Alex", "Jamie", "Jordan"};
         String[] playerTokens = new String[playerNames.length];
 
+        GameBoard gameBoard = new GameBoard(new ArrayList<>(), false, new Bank(new ArrayList<>()));
+
         for (int i = 0; i < playerNames.length; i++) {
-            playerTokens[i] = showTokenSelectionPopup(playerNames[i]);
+            playerTokens[i] = showTokenSelectionPopup(playerNames[i], gameBoard.getAvailableTokens());
         }
 
         String[] selectedPlayerTokens = new String[playerNames.length];
@@ -52,8 +54,10 @@ public class GUI extends JFrame {
         setVisible(true);
     }
 
-    private String showTokenSelectionPopup(String playerName) {
-        String[] tokenOptions = {"Car", "Dog", "Hat", "Iron", "Shoe", "Thimble"};
+    private String showTokenSelectionPopup(String playerName, List<String> availableTokens) {
+
+        String[] tokenOptions = availableTokens.toArray(new String[0]);
+
         return (String) JOptionPane.showInputDialog(
                 this,
                 playerName + ", choose your token:",
@@ -90,8 +94,8 @@ public class GUI extends JFrame {
 
         private void addSpacesToBoard() {
             int constant = 12; // change this number to change size of tiles
-            int CornerSpaceSize = 82 + constant; // width/height for Go, Jail, Free Parking, and Go to Jail spaces
-            int horizontalWidth = 60 + constant;
+            int CornerSpaceSize = 82 + constant; // width-height for Go, Jail, Free Parking, and Go to Jail spaces
+            int horizontalWidth = 64 + constant;
             int horizontalHeight = 82 + constant;
             int verticalWidth = 82 + constant;
             int verticalHeight = 60 + constant;
@@ -136,7 +140,7 @@ public class GUI extends JFrame {
 
         private int[] colorSelection(String color) {
             if (color.equalsIgnoreCase("Brown")) {
-                return new int[]{153, 102, 51};
+                return new int[]{181, 101, 29};
             } else if (color.equalsIgnoreCase("Light Blue")) {
                 return new int[]{173, 216, 230};
             } else if (color.equalsIgnoreCase("Pink")) {
@@ -150,39 +154,55 @@ public class GUI extends JFrame {
             } else if (color.equalsIgnoreCase("Green")) {
                 return new int[]{0, 128, 0};
             } else if (color.equalsIgnoreCase("Dark Blue")) {
-                return new int[]{0, 0, 139};
+                return new int[]{65, 105, 255};
             } else {
                 return new int[]{0, 0, 0}; //black
             }
         }
 
         private void addSpaceButton(Space space, int x, int y, int width, int height) {
-            JButton spaceButton = new JButton("<html><center>" + space.getName() + "</center></html>");
-            spaceButton.setBounds(x, y, width, height);
-            spaceButton.setFont(new Font("Arial", Font.PLAIN, 10));
-            spaceButton.setOpaque(true);
+            JPanel spacePanel = new JPanel(new GridBagLayout());
+            spacePanel.setBounds(x, y, width, height);
+            spacePanel.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+            spacePanel.setBackground(Color.LIGHT_GRAY); // Default color
 
-            if (space instanceof PropertySpace) {
-                String colorName = ((PropertySpace) space).getColorGroup(); // Inherited from Property
+            String formattedName = "<html><div style='text-align:center;'>" +
+                    space.getName().replace(" ", "<br>") +
+                    "</div></html>";
+            JLabel nameLabel = new JLabel(formattedName, SwingConstants.CENTER);
+            nameLabel.setFont(new Font("Arial", Font.BOLD, 10));
+            spacePanel.add(nameLabel); // GridBagLayout centers it
+
+            int index = spaces.indexOf(space);
+            boolean isCorner = index == 0 || index == 10 || index == 20 || index == 30;
+
+            if (isCorner) {
+                spacePanel.setBackground(Color.WHITE);
+            } else if (space instanceof PropertySpace) {
+                String colorName = ((PropertySpace) space).getColorGroup();
                 int[] rgb = colorSelection(colorName);
-                spaceButton.setBackground(new Color(rgb[0], rgb[1], rgb[2]));
-                spaceButton.setToolTipText("Property: " + space.getName());
+                spacePanel.setBackground(new Color(rgb[0], rgb[1], rgb[2]));
+            } else {
+                spacePanel.setBackground(new Color(200, 200, 200)); // default light gray
             }
 
-            spaceButton.addActionListener(e -> {
-                JDialog dialog = new JDialog();
-                dialog.setTitle(space.getName());
-                dialog.setSize(300, 200);
-                dialog.setLocationRelativeTo(null);
-                dialog.add(new JLabel("<html><center>Details about " + space.getName() + "</center></html>", SwingConstants.CENTER));
-                dialog.setVisible(true);
+            // Add "click" behavior
+            spacePanel.addMouseListener(new java.awt.event.MouseAdapter() {
+                public void mouseClicked(java.awt.event.MouseEvent evt) {
+                    JDialog dialog = new JDialog();
+                    dialog.setTitle(space.getName());
+                    dialog.setSize(300, 200);
+                    dialog.setLocationRelativeTo(null);
+                    dialog.add(new JLabel("<html><center>Details about " + space.getName() + "</center></html>", SwingConstants.CENTER));
+                    dialog.setVisible(true);
+                }
             });
 
-            add(spaceButton);
+            this.add(spacePanel);
         }
 
         private void addTokens(String[] selectedPlayerTokens) {
-            int[] xOffsets = {840, 840, 840, 840};
+            int[] xOffsets = {900, 900, 900, 900};
             int[] yOffsets = {780, 750, 720, 690};
             int tokenWidth = 55;
 
