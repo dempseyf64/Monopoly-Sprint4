@@ -22,6 +22,11 @@ public class GameBoard {
     private final List<Player> players; // List of players in the game
     private final boolean isTestMode; // Indicates if the game is in test mode
     private final Bank bank; // The bank managing game finances
+    private final List<String> availableTokens = new ArrayList<>(Arrays.asList(
+            "Boat", "Cannon", "Car", "Cat", "Dog", "Duck",
+            "Hat", "Horse", "Iron", "Penguin", "Shoe",
+            "Thimble" //missing Train, Wheelbarrow, Boot/Shoe
+    ));
 
     /**
      * Constructs a GameBoard with the specified players, test mode, and bank.
@@ -123,12 +128,6 @@ public class GameBoard {
             return;
         }
 
-        List<String> availableTokens = new ArrayList<>(Arrays.asList(
-                "Top Hat", "Battleship", "Thimble", "Cannon", "Cat", "Iron",
-                "Scottie dog", "The Shoe", "Boot", "Ducky", "Horse & Rider",
-                "Penguin", "Race car", "Train", "Wheelbarrow"
-        ));
-
         for (Player player : players) {
             if (player instanceof ComputerPlayer) {
                 String chosenToken = availableTokens.remove(0);
@@ -229,6 +228,15 @@ public class GameBoard {
      */
     public List<Player> getPlayers() {
         return players;
+    }
+
+    /**
+     * Gets the list of available tokens upon selection.
+     *
+     * @return The list of available tokens.
+     */
+    public List<String> getAvailableTokens() {
+        return availableTokens;
     }
 
     /**
