@@ -27,10 +27,19 @@ public class GUI extends JFrame {
         String[] playerNames = {"Stacy", "Alex", "Jamie", "Jordan"};
         String[] playerTokens = new String[playerNames.length];
 
-        GameBoard gameBoard = new GameBoard(new ArrayList<>(), false, new Bank(new ArrayList<>()));
+        GameBoard sharedGameBoard = new GameBoard(new ArrayList<>(), false, new Bank(new ArrayList<>()));
+
+        List<String> availableTokens = sharedGameBoard.getAvailableTokens();
 
         for (int i = 0; i < playerNames.length; i++) {
-            playerTokens[i] = showTokenSelectionPopup(playerNames[i], gameBoard.getAvailableTokens());
+            String selectedToken = showTokenSelectionPopup(playerNames[i], availableTokens);
+            playerTokens[i] = selectedToken;
+            availableTokens.remove(selectedToken); // Avoids token duplicates
+        }
+
+        for (int i = 0; i < playerNames.length; i++) {
+            Player player = new Player(playerNames[i], playerTokens[i], sharedGameBoard);
+            sharedGameBoard.getPlayers().add(player);
         }
 
         String[] selectedPlayerTokens = new String[playerNames.length];
@@ -40,7 +49,7 @@ public class GUI extends JFrame {
         tabbedPane.addTab("Your Turn", new JPanel());
         tabbedPane.addTab("Bank", new JPanel());
 
-        gameBoardPanel = new GameBoardPanel(selectedPlayerTokens);
+        gameBoardPanel = new GameBoardPanel(sharedGameBoard, selectedPlayerTokens);
         add(gameBoardPanel, BorderLayout.CENTER);
 
         for (String playerName : playerNames) {
@@ -73,13 +82,16 @@ public class GUI extends JFrame {
         private static final int SQUARE_SIZE = 82;
         private final List<Space> spaces;
 
-        public GameBoardPanel(String[] selectedPlayerTokens) {
+        /**
+         * Creates visible panel for game board
+         * @param selectedPlayerTokens
+         */
+        public GameBoardPanel(GameBoard gameBoard, String[] selectedPlayerTokens) {
             // setPreferredSize(new Dimension(900, 900));
             setBackground(Color.WHITE);
             setLayout(null);
 
             // Pass an empty list of players instead of null
-            GameBoard gameBoard = new GameBoard(new ArrayList<>(), false, new Bank(new ArrayList<>()));
             spaces = gameBoard.getSpaces();
 
             addSpacesToBoard();
@@ -92,6 +104,9 @@ public class GUI extends JFrame {
             repaint();
         }
 
+        /**
+         * positioning spaces (buttons) around the board
+         */
         private void addSpacesToBoard() {
             int constant = 12; // change this number to change size of tiles
             int CornerSpaceSize = 82 + constant; // width-height for Go, Jail, Free Parking, and Go to Jail spaces
@@ -202,13 +217,14 @@ public class GUI extends JFrame {
         }
 
         private void addTokens(String[] selectedPlayerTokens) {
-            int[] xOffsets = {900, 900, 900, 900};
-            int[] yOffsets = {780, 750, 720, 690};
             int tokenWidth = 55;
 
             for (int i = 0; i < selectedPlayerTokens.length; i++) {
-                String tokenName = selectedPlayerTokens[i] + "Token";
-                addToken(tokenName, xOffsets[i], yOffsets[i], tokenWidth);
+                String tokenName = selectedPlayerTokens[i] + "Token"; // e.g., "CarToken", "DogToken"
+                int playerStartPosition = 0; // All players start on "GO" space (index 0)
+                Point coords = getCoordinatesForPosition(playerStartPosition); // Get pixel coordinates for that space
+                int offset = i * 10; // offsetting token on the board from the rest of the pieces
+                addToken(tokenName, coords.x + offset, coords.y, tokenWidth);
             }
         }
 
@@ -222,7 +238,48 @@ public class GUI extends JFrame {
 
             JLabel tokenLabel = new JLabel(tokenIcon);
             tokenLabel.setBounds(xOffset, yOffset, tokenWidth, newHeight);
-            add(tokenLabel);
+            add(tokenLabel); // Adds token label to the board panel
+
+            setComponentZOrder(tokenLabel, 0); // Ensure tokens stay visually on top
+            repaint(); // Refresh UI
+        }
+
+        /**
+         * assigns positions for tokens to jump around on thorughout the game baord spaces
+         * @param position
+         * @return
+         */
+        private Point getCoordinatesForPosition(int position) {
+            int constant = 12;
+            int CornerSpaceSize = 82 + constant;
+            int horizontalWidth = 64 + constant;
+            int horizontalHeight = 82 + constant;
+            int verticalWidth = 82 + constant;
+            int verticalHeight = 60 + constant;
+
+            int x = 82 + constant;
+            int y = 0;
+
+            if (position >= 0 && position <= 10) {
+                // Top row (0–10)
+                x = (position == 0) ? x - CornerSpaceSize : x + (horizontalWidth * (position - 1));
+                y = 0;
+            } else if (position > 10 && position <= 20) {
+                // Right column (11–20)
+                x = x + (horizontalWidth * 9);
+                y = CornerSpaceSize + (verticalHeight * (position - 11));
+            } else if (position > 20 && position <= 30) {
+                // Bottom row (21–30)
+                x = (horizontalWidth * (30 - position));
+                y = CornerSpaceSize + (verticalHeight * 9);
+            } else if (position > 30 && position < 40) {
+                // Left column (31–39)
+                x = 0;
+                y = CornerSpaceSize + (verticalHeight * (39 - position));
+            }
+
+            // Small offset tweak to center token
+            return new Point(x + 10, y + 10);
         }
     }
 
