@@ -17,35 +17,49 @@ import java.util.Objects;
  * @author Kristian Wright
  */
 public class DicePanel extends JPanel {
-    /** Label displaying dice roll results and current player information */
+    /**
+     * Label displaying dice roll results and current player information
+     */
     private final JLabel diceResultLabel;
 
-    /** Label displaying the first dice image */
+    /**
+     * Label displaying the first dice image
+     */
     private final JLabel dice1Label;
 
-    /** Label displaying the second dice image */
+    /**
+     * Label displaying the second dice image
+     */
     private final JLabel dice2Label;
 
-    /** Reference to the singleton Dice object for generating dice rolls */
+    /**
+     * Reference to the singleton Dice object for generating dice rolls
+     */
     private final Dice dice;
 
-    /** Reference to the game board model containing game state information */
+    /**
+     * Reference to the game board model containing game state information
+     */
     private final GameBoard gameBoard;
 
-    /** Index of the current player whose turn it is */
+    /**
+     * Index of the current player whose turn it is
+     */
     private int currentPlayerIndex = 0;
 
-    /** Reference to the game board panel for updating token positions */
-    private final GUI.GameBoardPanel gameBoardPanel;
+    /**
+     * Reference to the game board panel for updating token positions
+     */
+    private final GameBoardPanel gameBoardPanel;
 
     /**
      * Constructs a DicePanel with the required game components.
      * Initializes the dice roll interface and connects it to the game board.
      *
-     * @param gameBoard The game board model containing players and game state
+     * @param gameBoard      The game board model containing players and game state
      * @param gameBoardPanel The visual game board panel for updating token positions
      */
-    public DicePanel(GameBoard gameBoard, GUI.GameBoardPanel gameBoardPanel) {
+    public DicePanel(GameBoard gameBoard, GameBoardPanel gameBoardPanel) {
         this.gameBoard = gameBoard;
         this.gameBoardPanel = gameBoardPanel;
         this.dice = Dice.getInstance();
@@ -71,7 +85,8 @@ public class DicePanel extends JPanel {
         rollButton.setFont(new Font("Arial", Font.BOLD, 16));
 
         diceResultLabel = new JLabel("Current Player: " +
-                gameBoard.getPlayers().get(currentPlayerIndex).getName(),
+                (gameBoard.getPlayers().isEmpty() ? "No players" :
+                        gameBoard.getPlayers().get(currentPlayerIndex).getName()),
                 SwingConstants.CENTER);
 
         rollButton.addActionListener(e -> rollDiceAndMove());
@@ -87,6 +102,11 @@ public class DicePanel extends JPanel {
      * and handles turn management including doubles.
      */
     private void rollDiceAndMove() {
+        if (gameBoard.getPlayers().isEmpty()) {
+            diceResultLabel.setText("No players to assign tokens to.");
+            return;
+        }
+
         // Get current player
         Player currentPlayer = gameBoard.getPlayers().get(currentPlayerIndex);
 
@@ -116,6 +136,8 @@ public class DicePanel extends JPanel {
         // Switch to next player if not doubles
         if (dice1Value != dice2Value) {
             currentPlayerIndex = (currentPlayerIndex + 1) % gameBoard.getPlayers().size();
+            diceResultLabel.setText("Current Player: " +
+                    gameBoard.getPlayers().get(currentPlayerIndex).getName());
         } else {
             JOptionPane.showMessageDialog(this,
                     currentPlayer.getName() + " rolled doubles! Roll again.");
@@ -148,28 +170,31 @@ public class DicePanel extends JPanel {
      * Moves a player's token on the game board to reflect their new position.
      * Finds the corresponding token label and updates its location.
      *
-     * @param player The player whose token should be moved
+     * @param player      The player whose token should be moved
      * @param newPosition The new board position (0-39) for the token
      */
     private void movePlayerToken(Player player, int newPosition) {
-        // Use getToken() instead of getTokenName()
-        String tokenName = player.getToken() + "Token";
+        String tokenName = player.getToken();
 
+        // Get the coordinates for the new position
         Point coords = gameBoardPanel.getCoordinatesForPosition(newPosition);
 
-        // Find the token component and move it
-        for (Component component : gameBoardPanel.getComponents()) {
-            if (component instanceof JLabel label) {
-                if (label.getIcon() != null) {
-                    ImageIcon icon = (ImageIcon) label.getIcon();
-                    if (icon.toString().contains(tokenName)) {
-                        // Found the token, update its position
-                        label.setLocation(coords.x, coords.y);
-                        break;
-                    }
-                }
-            }
+        System.out.println("Moving " + player.getName() + " (" + tokenName + ") to position " +
+                newPosition + " at coordinates: " + coords.x + "," + coords.y);
+
+        // Get the player's token label directly from the GameBoardPanel
+        JLabel tokenLabel = gameBoardPanel.getPlayerToken(tokenName);
+
+        if (tokenLabel != null) {
+            // Move the token to the new position
+            tokenLabel.setLocation(coords.x, coords.y);
+            System.out.println("Found and moved token for " + player.getName());
+        } else {
+            System.out.println("Token not found for " + player.getName());
         }
+
+        // Force UI update
+        gameBoardPanel.revalidate();
         gameBoardPanel.repaint();
     }
 }
