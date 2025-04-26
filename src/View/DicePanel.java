@@ -2,6 +2,7 @@ package View;
 
 import Model.Dice;
 import Model.GameBoard;
+import Model.JailSpace;
 import Model.Player;
 
 import javax.swing.*;
@@ -54,6 +55,11 @@ public class DicePanel extends JPanel {
     private final JButton rollButton;
 
     /**
+     * Button for paying jail fine
+     */
+    private final JButton payJailFineButton;
+
+    /**
      * Reference to the game board panel for updating token positions
      */
     private final GameBoardPanel gameBoardPanel;
@@ -62,6 +68,11 @@ public class DicePanel extends JPanel {
      * Counter for tracking consecutive doubles rolled by the current player
      */
     private int consecutiveDoublesCount = 0;
+
+    /**
+     * Reference to the jail space object
+     */
+    private final JailSpace jailSpace;
 
     /**
      * Gets the current player index
@@ -85,8 +96,19 @@ public class DicePanel extends JPanel {
             consecutiveDoublesCount = 0;
             // Re-enable the roll button for the new player
             rollButton.setEnabled(true);
+
+            Player currentPlayer = gameBoard.getPlayers().get(currentPlayerIndex);
+            String playerStatus = "";
+            if (jailSpace.isInJail(currentPlayer)) {
+                int jailTurns = jailSpace.getJailTurns(currentPlayer);
+                playerStatus = " (IN JAIL - turn " + jailTurns + "/3)";
+                payJailFineButton.setVisible(true);
+            } else {
+                payJailFineButton.setVisible(false);
+            }
+
             diceResultLabel.setText("Current Player: " +
-                    gameBoard.getPlayers().get(currentPlayerIndex).getName());
+                    currentPlayer.getName() + playerStatus);
         }
     }
 
@@ -101,6 +123,7 @@ public class DicePanel extends JPanel {
         this.gameBoard = gameBoard;
         this.gameBoardPanel = gameBoardPanel;
         this.dice = Dice.getInstance();
+        this.jailSpace = new JailSpace(); // Create the jail space
 
         setLayout(new BorderLayout());
 
@@ -119,19 +142,55 @@ public class DicePanel extends JPanel {
         diceImagesPanel.add(dice1Label);
         diceImagesPanel.add(dice2Label);
 
+        // Create control buttons panel
+        JPanel controlPanel = new JPanel(new FlowLayout());
+
         rollButton = new JButton("Roll Dice");
         rollButton.setFont(new Font("Arial", Font.BOLD, 16));
+        rollButton.addActionListener(e -> rollDiceAndMove());
+
+        payJailFineButton = new JButton("Pay $50 Fine to Get Out of Jail");
+        payJailFineButton.setFont(new Font("Arial", Font.BOLD, 14));
+        payJailFineButton.addActionListener(e -> payJailFine());
+        // Initially hidden
+        payJailFineButton.setVisible(false);
+
+        controlPanel.add(rollButton);
+        controlPanel.add(payJailFineButton);
 
         diceResultLabel = new JLabel("Current Player: " +
                 (gameBoard.getPlayers().isEmpty() ? "No players" :
                         gameBoard.getPlayers().get(currentPlayerIndex).getName()),
                 SwingConstants.CENTER);
 
-        rollButton.addActionListener(e -> rollDiceAndMove());
-
-        add(rollButton, BorderLayout.NORTH);
+        add(controlPanel, BorderLayout.NORTH);
         add(diceImagesPanel, BorderLayout.CENTER);
         add(diceResultLabel, BorderLayout.SOUTH);
+    }
+
+    /**
+     * Handles the player paying a fine to get out of jail
+     */
+    private void payJailFine() {
+        Player currentPlayer = gameBoard.getPlayers().get(currentPlayerIndex);
+
+        if (jailSpace.isInJail(currentPlayer)) {
+            if (jailSpace.payFineToLeaveJail(currentPlayer)) {
+                JOptionPane.showMessageDialog(this,
+                        currentPlayer.getName() + " paid $50 to get out of jail!");
+                diceResultLabel.setText(currentPlayer.getName() +
+                        " paid the fine and is now free. Roll the dice.");
+                rollButton.setEnabled(true);
+                payJailFineButton.setVisible(false);
+            } else {
+                JOptionPane.showMessageDialog(this,
+                        "Not enough money to pay the jail fine!");
+            }
+        } else {
+            JOptionPane.showMessageDialog(this,
+                    currentPlayer.getName() + " is not in jail!");
+            payJailFineButton.setVisible(false);
+        }
     }
 
     /**
@@ -154,13 +213,41 @@ public class DicePanel extends JPanel {
         int dice1Value = results.get(0);
         int dice2Value = results.get(1);
         int totalRoll = dice1Value + dice2Value;
+        boolean isDoubles = (dice1Value == dice2Value);
 
         // Update dice display
         updateDiceImages(dice1Value, dice2Value);
 
-        // Check if it's doubles
-        boolean isDoubles = (dice1Value == dice2Value);
+        // Check if player is in jail
+        if (jailSpace.isInJail(currentPlayer)) {
+            if (jailSpace.attemptJailRelease(currentPlayer, results)) {
+                // Player got out of jail - they move the number of spaces shown on the dice
+                movePlayerToken(currentPlayer, currentPlayer.getPosition());
 
+                String releaseMethod = isDoubles ? "by rolling doubles" : "after 3 turns";
+                diceResultLabel.setText(currentPlayer.getName() + " got out of jail " +
+                        releaseMethod + " and moved " + totalRoll + " spaces!");
+
+                // Important: In Monopoly, when you get out of jail by rolling doubles,
+                // you don't get to roll again - your turn ends after the move
+                rollButton.setEnabled(false);
+                payJailFineButton.setVisible(false);
+            } else {
+                // Player still in jail
+                int jailTurn = jailSpace.getJailTurns(currentPlayer);
+                diceResultLabel.setText(currentPlayer.getName() + " is still in jail. Jail turn " +
+                        jailTurn + "/3");
+                rollButton.setEnabled(false);
+
+                // Keep the pay fine button visible
+                payJailFineButton.setVisible(true);
+            }
+            return;
+        }
+
+        // Not in jail - proceed with normal turn
+
+        // Check for consecutive doubles
         if (isDoubles) {
             consecutiveDoublesCount++;
         } else {
@@ -175,14 +262,17 @@ public class DicePanel extends JPanel {
             // Disable roll button
             rollButton.setEnabled(false);
 
-            // Set player position to jail (position 10)
-            currentPlayer.setPosition(10);
+            // Send player to jail using JailSpace
+            jailSpace.sendToJail(currentPlayer);
 
             // Move token to jail
-            movePlayerToken(currentPlayer, 10);
+            movePlayerToken(currentPlayer, 10); // Jail position
 
             // Update message
             diceResultLabel.setText(currentPlayer.getName() + " rolled three doubles in a row! Go to Jail!");
+
+            // Show jail fine button
+            payJailFineButton.setVisible(true);
 
             // Show message dialog
             JOptionPane.showMessageDialog(this,
@@ -253,17 +343,17 @@ public class DicePanel extends JPanel {
         String tokenName = player.getToken();
 
         // Get the coordinates for the new position
-        Point coords = gameBoardPanel.getCoordinatesForPosition(newPosition);
+        Point cords = gameBoardPanel.getCoordinatesForPosition(newPosition);
 
         System.out.println("Moving " + player.getName() + " (" + tokenName + ") to position " +
-                newPosition + " at coordinates: " + coords.x + "," + coords.y);
+                newPosition + " at coordinates: " + cords.x + "," + cords.y);
 
         // Get the player's token label directly from the GameBoardPanel
         JLabel tokenLabel = gameBoardPanel.getPlayerToken(tokenName);
 
         if (tokenLabel != null) {
             // Move the token to the new position
-            tokenLabel.setLocation(coords.x, coords.y);
+            tokenLabel.setLocation(cords.x, cords.y);
             System.out.println("Found and moved token for " + player.getName());
         } else {
             System.out.println("Token not found for " + player.getName());
