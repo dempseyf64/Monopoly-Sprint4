@@ -16,13 +16,6 @@ import java.util.Objects;
 
 
 public class GUI extends JFrame {
-    private final GameBoardPanel gameBoardPanel;
-    private JLabel diceResultLabel;
-    private JLabel dice1Label;
-    private JLabel dice2Label;
-    private final Dice dice;
-    private final GameBoard sharedGameBoard; // Move from local variable to class field
-    private int currentPlayerIndex = 0;
 
     public GUI() {
         setTitle("Monopoly Game");
@@ -31,13 +24,12 @@ public class GUI extends JFrame {
         setLayout(new BorderLayout());
 
         // Initialize dice instance
-        dice = Dice.getInstance();
 
         String[] playerNames = {"Stacy", "Alex", "Jamie", "Jordan"};
         String[] playerTokens = new String[playerNames.length];
 
         // Initialize class field instead of local variable
-        sharedGameBoard = new GameBoard(new ArrayList<>(), false, new Bank(new ArrayList<>()));
+        GameBoard sharedGameBoard = new GameBoard(new ArrayList<>(), false, new Bank(new ArrayList<>()));
 
         List<String> availableTokens = sharedGameBoard.getAvailableTokens();
 
@@ -55,13 +47,14 @@ public class GUI extends JFrame {
         String[] selectedPlayerTokens = new String[playerNames.length];
         System.arraycopy(playerTokens, 0, selectedPlayerTokens, 0, playerTokens.length);
 
-        JTabbedPane tabbedPane = new JTabbedPane();
-        tabbedPane.addTab("Your Turn", createDicePanel()); // Use dice panel here
-        tabbedPane.addTab("Bank", new JPanel());
-
-        // Use class field instead of local variable
-        gameBoardPanel = new GameBoardPanel(sharedGameBoard, selectedPlayerTokens);
+        // Create game board panel first
+        GameBoardPanel gameBoardPanel = new GameBoardPanel(sharedGameBoard, selectedPlayerTokens);
         add(gameBoardPanel, BorderLayout.CENTER);
+
+        JTabbedPane tabbedPane = new JTabbedPane();
+        // Use the new DicePanel class here
+        tabbedPane.addTab("Your Turn", new DicePanel(sharedGameBoard, gameBoardPanel));
+        tabbedPane.addTab("Bank", new JPanel());
 
         for (String playerName : playerNames) {
             tabbedPane.addTab(playerName, new JPanel());
@@ -75,9 +68,7 @@ public class GUI extends JFrame {
     }
 
     private String showTokenSelectionPopup(String playerName, List<String> availableTokens) {
-
         String[] tokenOptions = availableTokens.toArray(new String[0]);
-
         return (String) JOptionPane.showInputDialog(
                 this,
                 playerName + ", choose your token:",
@@ -256,7 +247,7 @@ public class GUI extends JFrame {
         /**
          * assigns positions for tokens to jump around on thorughout the game baord spaces
          */
-        private Point getCoordinatesForPosition(int position) {
+        public Point getCoordinatesForPosition(int position) {
             int constant = 12;
             int CornerSpaceSize = 82 + constant;
             int horizontalWidth = 64 + constant;
@@ -285,115 +276,6 @@ public class GUI extends JFrame {
             // Small offset tweak to center token
             return new Point(x + 10, y + 10);
         }
-    }
-
-    private JPanel createDicePanel() {
-        JPanel dicePanel = new JPanel();
-        dicePanel.setLayout(new BorderLayout());
-
-        JPanel diceImagesPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        dice1Label = new JLabel();
-        dice2Label = new JLabel();
-
-        // Initialize with placeholder images
-        dice1Label.setPreferredSize(new Dimension(60, 60));
-        dice2Label.setPreferredSize(new Dimension(60, 60));
-        dice1Label.setBorder(BorderFactory.createLineBorder(Color.BLACK));
-        dice2Label.setBorder(BorderFactory.createLineBorder(Color.BLACK));
-        dice1Label.setHorizontalAlignment(SwingConstants.CENTER);
-        dice2Label.setHorizontalAlignment(SwingConstants.CENTER);
-
-        diceImagesPanel.add(dice1Label);
-        diceImagesPanel.add(dice2Label);
-
-        JButton rollButton = new JButton("Roll Dice");
-        rollButton.setFont(new Font("Arial", Font.BOLD, 16));
-
-        diceResultLabel = new JLabel("Current Player: " +
-                sharedGameBoard.getPlayers().get(currentPlayerIndex).getName(),
-                SwingConstants.CENTER);
-
-        rollButton.addActionListener(e -> rollDiceAndMove());
-
-        dicePanel.add(rollButton, BorderLayout.NORTH);
-        dicePanel.add(diceImagesPanel, BorderLayout.CENTER);
-        dicePanel.add(diceResultLabel, BorderLayout.SOUTH);
-
-        return dicePanel;
-    }
-
-    private void rollDiceAndMove() {
-        // Get current player
-        Player currentPlayer = sharedGameBoard.getPlayers().get(currentPlayerIndex);
-
-        // Roll the dice
-        ArrayList<Integer> results = dice.rollDice();
-        int dice1Value = results.get(0);
-        int dice2Value = results.get(1);
-        int totalRoll = dice1Value + dice2Value;
-
-        // Update dice display
-        updateDiceImages(dice1Value, dice2Value);
-
-        // Calculate new position
-        int currentPosition = currentPlayer.getPosition();
-        int newPosition = (currentPosition + totalRoll) % 40;
-
-        // Update player position
-        currentPlayer.setPosition(newPosition);
-
-        // Update result label
-        diceResultLabel.setText(currentPlayer.getName() + " rolled " +
-                dice1Value + " + " + dice2Value + " = " + totalRoll);
-
-        // Move token on board
-        movePlayerToken(currentPlayer, newPosition);
-
-        // Switch to next player if not doubles
-        if (dice1Value != dice2Value) {
-            currentPlayerIndex = (currentPlayerIndex + 1) % sharedGameBoard.getPlayers().size();
-        } else {
-            JOptionPane.showMessageDialog(this,
-                    currentPlayer.getName() + " rolled doubles! Roll again.");
-        }
-    }
-
-    private void updateDiceImages(int dice1Value, int dice2Value) {
-        try {
-            ImageIcon icon1 = new ImageIcon(Objects.requireNonNull(getClass().getResource("/Images/dice" + dice1Value + ".png")));
-            ImageIcon icon2 = new ImageIcon(Objects.requireNonNull(getClass().getResource("/Images/dice" + dice2Value + ".png")));
-
-            dice1Label.setIcon(icon1);
-            dice2Label.setIcon(icon2);
-        } catch (Exception e) {
-            // Fallback if images not found
-            dice1Label.setText(Integer.toString(dice1Value));
-            dice2Label.setText(Integer.toString(dice2Value));
-        }
-    }
-
-    private void movePlayerToken(Player player, int newPosition) {
-        // Use getToken() instead of getTokenName() - assuming Player class has this method
-        String tokenName = player.getToken() + "Token";
-
-        GameBoardPanel boardPanel = gameBoardPanel;
-        Point coords = boardPanel.getCoordinatesForPosition(newPosition);
-
-        // Find the token component and move it
-        for (Component component : boardPanel.getComponents()) {
-            if (component instanceof JLabel label) {
-                if (label.getIcon() != null) {
-                    // Since getName() might not be set properly, try to match by token image name
-                    ImageIcon icon = (ImageIcon) label.getIcon();
-                    if (icon.toString().contains(tokenName)) {
-                        // Found the token, update its position
-                        label.setLocation(coords.x, coords.y);
-                        break;
-                    }
-                }
-            }
-        }
-        boardPanel.repaint();
     }
 
     public static void main(String[] args) {
