@@ -9,10 +9,11 @@ import java.util.List;
 /**
  * The GUI class represents the main graphical user interface for the Monopoly game.
  * It initializes the game board, player panels, and other UI components.
-
+ * <p>
  * Created by Rachele Grigoli and modified by Kristian Wright and Collin Cabral-Castro
  */
 public class GUI extends JFrame {
+    private final DicePanel dicePanel;
 
     public GUI() {
         setTitle("Monopoly Game");
@@ -47,12 +48,62 @@ public class GUI extends JFrame {
         add(gameBoardPanel, BorderLayout.CENTER);
 
         JTabbedPane tabbedPane = new JTabbedPane();
-        // Use the DicePanel class here
-        tabbedPane.addTab("Your Turn", new DicePanel(sharedGameBoard, gameBoardPanel));
+
+        // Create a panel for the "Your Turn" tab with dice and action buttons
+        JPanel turnPanel = new JPanel(new BorderLayout());
+        dicePanel = new DicePanel(sharedGameBoard, gameBoardPanel);
+        turnPanel.add(dicePanel, BorderLayout.NORTH);
+
+        // Create panel for action buttons
+        JPanel actionButtonsPanel = new JPanel();
+        actionButtonsPanel.setLayout(new GridLayout(5, 1, 0, 10));
+        actionButtonsPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
+        Font buttonFont = new Font("Arial", Font.BOLD, 16);
+
+// Create buttons
+        JButton endTurnButton = new JButton("End Turn");
+        JButton buyHouseButton = new JButton("Buy House");
+        JButton buyHotelButton = new JButton("Buy Hotel");
+        JButton mortgageButton = new JButton("Mortgage Property");
+        JButton tradeButton = new JButton("Start Trade");
+
+// Set font for all buttons
+        endTurnButton.setFont(buttonFont);
+        buyHouseButton.setFont(buttonFont);
+        buyHotelButton.setFont(buttonFont);
+        mortgageButton.setFont(buttonFont);
+        tradeButton.setFont(buttonFont);
+
+// Add action listeners
+        endTurnButton.addActionListener(e -> {
+            int currentPlayerIndex = dicePanel.getCurrentPlayerIndex();
+            int nextPlayerIndex = (currentPlayerIndex + 1) % sharedGameBoard.getPlayers().size();
+            dicePanel.setCurrentPlayerIndex(nextPlayerIndex);
+            // No need to explicitly enable the roll button as setCurrentPlayerIndex does this
+            System.out.println("Turn ended. Next player: " +
+                    sharedGameBoard.getPlayers().get(nextPlayerIndex).getName());
+        });
+        buyHouseButton.addActionListener(e -> System.out.println("Buy House clicked"));
+        buyHotelButton.addActionListener(e -> System.out.println("Buy Hotel clicked"));
+        mortgageButton.addActionListener(e -> System.out.println("Mortgage Property clicked"));
+        tradeButton.addActionListener(e -> System.out.println("Start Trade clicked"));
+
+// Add buttons to the panel
+        actionButtonsPanel.add(endTurnButton);
+        actionButtonsPanel.add(buyHouseButton);
+        actionButtonsPanel.add(buyHotelButton);
+        actionButtonsPanel.add(mortgageButton);
+        actionButtonsPanel.add(tradeButton);
+
+        turnPanel.add(actionButtonsPanel, BorderLayout.CENTER);
+
+        tabbedPane.addTab("Your Turn", turnPanel);
         tabbedPane.addTab("Bank", new JPanel());
 
-        for (String playerName : playerNames) {
-            tabbedPane.addTab(playerName, new JPanel());
+        // Add a PlayerPanel for each player in the game
+        for (int i = 0; i < playerNames.length; i++) {
+            tabbedPane.addTab(playerNames[i], new PlayerPanel(playerNames[i], playerTokens[i]));
         }
 
         tabbedPane.setPreferredSize(new Dimension(300, 900));
