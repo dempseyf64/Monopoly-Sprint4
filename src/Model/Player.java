@@ -22,9 +22,8 @@ public class Player {
     private int position;
     final private List<Property> properties;
     private boolean inJail;
-    private int jailTurns;
     private boolean hasGetOutOfJailFreeCard;
-    private Dice dice;
+    private final Dice dice;
     private GameBoard gameBoard;
 
     /**
@@ -41,7 +40,7 @@ public class Player {
         this.position = 0;
         this.properties = new ArrayList<>();
         this.inJail = false;
-        this.jailTurns = 0;
+        int jailTurns = 0;
         this.hasGetOutOfJailFreeCard = false;
         this.gameBoard = gameBoard;
         this.dice = Dice.getInstance();
@@ -53,7 +52,6 @@ public class Player {
      * @param steps the number of steps to move
      */
     public void move(int steps) {
-        int oldPosition = position;
         position = (position + steps) % 40;
         Space newSpace = gameBoard.getSpace(position);
         System.out.println(token + " moved to " + newSpace.getName());
