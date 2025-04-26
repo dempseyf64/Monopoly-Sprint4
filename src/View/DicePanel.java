@@ -13,6 +13,7 @@ import java.util.Objects;
  * The DicePanel class represents the panel for dice-related functionality in the Monopoly game.
  * It provides a user interface for players to roll dice and displays the results.
  * This panel handles the movement of player tokens on the game board based on dice rolls.
+ * It also implements Monopoly rules such as rolling doubles and going to jail after three consecutive doubles.
  *
  * @author Kristian Wright
  */
@@ -48,9 +49,46 @@ public class DicePanel extends JPanel {
     private int currentPlayerIndex = 0;
 
     /**
+     * Button for rolling dice
+     */
+    private final JButton rollButton;
+
+    /**
      * Reference to the game board panel for updating token positions
      */
     private final GameBoardPanel gameBoardPanel;
+
+    /**
+     * Counter for tracking consecutive doubles rolled by the current player
+     */
+    private int consecutiveDoublesCount = 0;
+
+    /**
+     * Gets the current player index
+     *
+     * @return The index of the current player
+     */
+    public int getCurrentPlayerIndex() {
+        return currentPlayerIndex;
+    }
+
+    /**
+     * Sets the current player index and updates UI.
+     * Resets the consecutive doubles counter and re-enables the roll button.
+     *
+     * @param index The new player index
+     */
+    public void setCurrentPlayerIndex(int index) {
+        if (index >= 0 && index < gameBoard.getPlayers().size()) {
+            currentPlayerIndex = index;
+            // Reset doubles counter for the new player
+            consecutiveDoublesCount = 0;
+            // Re-enable the roll button for the new player
+            rollButton.setEnabled(true);
+            diceResultLabel.setText("Current Player: " +
+                    gameBoard.getPlayers().get(currentPlayerIndex).getName());
+        }
+    }
 
     /**
      * Constructs a DicePanel with the required game components.
@@ -81,7 +119,7 @@ public class DicePanel extends JPanel {
         diceImagesPanel.add(dice1Label);
         diceImagesPanel.add(dice2Label);
 
-        JButton rollButton = new JButton("Roll Dice");
+        rollButton = new JButton("Roll Dice");
         rollButton.setFont(new Font("Arial", Font.BOLD, 16));
 
         diceResultLabel = new JLabel("Current Player: " +
@@ -99,7 +137,8 @@ public class DicePanel extends JPanel {
     /**
      * Handles the dice rolling action and player movement.
      * Updates the dice display, moves the player's token on the board,
-     * and handles turn management including doubles.
+     * and handles turn management including doubles and going to jail.
+     * Implements the rule of going to jail after three consecutive doubles.
      */
     private void rollDiceAndMove() {
         if (gameBoard.getPlayers().isEmpty()) {
@@ -119,6 +158,39 @@ public class DicePanel extends JPanel {
         // Update dice display
         updateDiceImages(dice1Value, dice2Value);
 
+        // Check if it's doubles
+        boolean isDoubles = (dice1Value == dice2Value);
+
+        if (isDoubles) {
+            consecutiveDoublesCount++;
+        } else {
+            consecutiveDoublesCount = 0;
+        }
+
+        // If third consecutive doubles, go to jail
+        if (consecutiveDoublesCount >= 3) {
+            // Reset doubles counter
+            consecutiveDoublesCount = 0;
+
+            // Disable roll button
+            rollButton.setEnabled(false);
+
+            // Set player position to jail (position 10)
+            currentPlayer.setPosition(10);
+
+            // Move token to jail
+            movePlayerToken(currentPlayer, 10);
+
+            // Update message
+            diceResultLabel.setText(currentPlayer.getName() + " rolled three doubles in a row! Go to Jail!");
+
+            // Show message dialog
+            JOptionPane.showMessageDialog(this,
+                    currentPlayer.getName() + " rolled three doubles in a row! Go to Jail!");
+
+            return;
+        }
+
         // Calculate new position
         int currentPosition = currentPlayer.getPosition();
         int newPosition = (currentPosition + totalRoll) % 40;
@@ -133,14 +205,18 @@ public class DicePanel extends JPanel {
         // Move token on board
         movePlayerToken(currentPlayer, newPosition);
 
-        // Switch to next player if not doubles
-        if (dice1Value != dice2Value) {
-            currentPlayerIndex = (currentPlayerIndex + 1) % gameBoard.getPlayers().size();
-            diceResultLabel.setText("Current Player: " +
-                    gameBoard.getPlayers().get(currentPlayerIndex).getName());
-        } else {
+        // If doubles, allow player to roll again (unless it's the third double)
+        if (isDoubles) {
             JOptionPane.showMessageDialog(this,
-                    currentPlayer.getName() + " rolled doubles! Roll again.");
+                    currentPlayer.getName() + " rolled doubles! Roll again. " +
+                            "Consecutive doubles: " + consecutiveDoublesCount);
+            // Keep roll button enabled
+        } else {
+            // Disable roll button until next player's turn
+            rollButton.setEnabled(false);
+            diceResultLabel.setText(currentPlayer.getName() + " rolled " +
+                    dice1Value + " + " + dice2Value + " = " + totalRoll +
+                    ". Click End Turn when done.");
         }
     }
 
