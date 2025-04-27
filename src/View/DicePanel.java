@@ -221,25 +221,15 @@ public class DicePanel extends JPanel {
         // Check if player is in jail
         if (jailSpace.isInJail(currentPlayer)) {
             if (jailSpace.attemptJailRelease(currentPlayer, results)) {
-                // Player got out of jail - they move the number of spaces shown on the dice
-                movePlayerToken(currentPlayer, currentPlayer.getPosition());
-
-                String releaseMethod = isDoubles ? "by rolling doubles" : "after 3 turns";
-                diceResultLabel.setText(currentPlayer.getName() + " got out of jail " +
-                        releaseMethod + " and moved " + totalRoll + " spaces!");
-
-                // Important: In Monopoly, when you get out of jail by rolling doubles,
-                // you don't get to roll again - your turn ends after the move
+                currentPlayer.move(totalRoll); // Use Player's move method
+                String spaceName = gameBoard.getSpace(currentPlayer.getPosition()).getName();
+                diceResultLabel.setText(currentPlayer.getName() + " got out of jail and landed on " + spaceName + ".");
                 rollButton.setEnabled(false);
                 payJailFineButton.setVisible(false);
             } else {
-                // Player still in jail
                 int jailTurn = jailSpace.getJailTurns(currentPlayer);
-                diceResultLabel.setText(currentPlayer.getName() + " is still in jail. Jail turn " +
-                        jailTurn + "/3");
+                diceResultLabel.setText(currentPlayer.getName() + " is still in jail. Jail turn " + jailTurn + "/3");
                 rollButton.setEnabled(false);
-
-                // Keep the pay fine button visible
                 payJailFineButton.setVisible(true);
             }
             return;
@@ -256,57 +246,30 @@ public class DicePanel extends JPanel {
 
         // If third consecutive doubles, go to jail
         if (consecutiveDoublesCount >= 3) {
-            // Reset doubles counter
             consecutiveDoublesCount = 0;
-
-            // Disable roll button
             rollButton.setEnabled(false);
-
-            // Send player to jail using JailSpace
             jailSpace.sendToJail(currentPlayer);
-
-            // Move token to jail
             movePlayerToken(currentPlayer, 10); // Jail position
-
-            // Update message
             diceResultLabel.setText(currentPlayer.getName() + " rolled three doubles in a row! Go to Jail!");
-
-            // Show jail fine button
             payJailFineButton.setVisible(true);
-
-            // Show message dialog
-            JOptionPane.showMessageDialog(this,
-                    currentPlayer.getName() + " rolled three doubles in a row! Go to Jail!");
-
+            JOptionPane.showMessageDialog(this, currentPlayer.getName() + " rolled three doubles in a row! Go to Jail!");
             return;
         }
 
-        // Calculate new position
-        int currentPosition = currentPlayer.getPosition();
-        int newPosition = (currentPosition + totalRoll) % 40;
-
-        // Update player position
-        currentPlayer.setPosition(newPosition);
-
-        // Update result label
-        diceResultLabel.setText(currentPlayer.getName() + " rolled " +
-                dice1Value + " + " + dice2Value + " = " + totalRoll);
+        // Move the player and update the result label
+        currentPlayer.move(totalRoll); // Use Player's move method
+        String spaceName = gameBoard.getSpace(currentPlayer.getPosition()).getName();
+        diceResultLabel.setText(currentPlayer.getName() + " landed on " + spaceName + ".");
 
         // Move token on board
-        movePlayerToken(currentPlayer, newPosition);
+        movePlayerToken(currentPlayer, currentPlayer.getPosition());
 
-        // If doubles, allow player to roll again (unless it's the third double)
+        // If doubles, allow player to roll again
         if (isDoubles) {
-            JOptionPane.showMessageDialog(this,
-                    currentPlayer.getName() + " rolled doubles! Roll again. " +
-                            "Consecutive doubles: " + consecutiveDoublesCount);
-            // Keep roll button enabled
+            JOptionPane.showMessageDialog(this, currentPlayer.getName() + " rolled doubles! Roll again.");
         } else {
-            // Disable roll button until next player's turn
             rollButton.setEnabled(false);
-            diceResultLabel.setText(currentPlayer.getName() + " rolled " +
-                    dice1Value + " + " + dice2Value + " = " + totalRoll +
-                    ". Click End Turn when done.");
+            diceResultLabel.setText(currentPlayer.getName() + " landed on " + spaceName + ". Click End Turn when done.");
         }
     }
 
