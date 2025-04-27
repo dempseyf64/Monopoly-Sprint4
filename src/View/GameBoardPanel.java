@@ -33,6 +33,8 @@ public class GameBoardPanel extends JPanel {
         spaces = gameBoard.getSpaces();
 
         addSpacesToBoard();
+        addChanceCard();
+        addCommunityChestCard();
 
         if (selectedPlayerTokens != null && selectedPlayerTokens.length > 0) {
             addTokens(selectedPlayerTokens);
@@ -46,7 +48,7 @@ public class GameBoardPanel extends JPanel {
      * Positions spaces (buttons) around the board
      */
     private void addSpacesToBoard() {
-        int constant = 12; // change this number to change size of tiles
+        int constant = 14; // change this number to change size of tiles
         int CornerSpaceSize = 82 + constant; // width-height for Go, Jail, Free Parking, and Go to Jail spaces
         int horizontalWidth = 64 + constant;
         int horizontalHeight = 82 + constant;
@@ -114,7 +116,7 @@ public class GameBoardPanel extends JPanel {
     }
 
     private void addSpaceButton(Space space, int x, int y, int width, int height) {
-        JPanel spacePanel = new JPanel(new GridBagLayout());
+        JPanel spacePanel = new JPanel(new BorderLayout());
         spacePanel.setBounds(x, y, width, height);
         spacePanel.setBorder(BorderFactory.createLineBorder(Color.BLACK));
         spacePanel.setBackground(Color.LIGHT_GRAY); // Default color
@@ -124,7 +126,9 @@ public class GameBoardPanel extends JPanel {
                 "</div></html>";
         JLabel nameLabel = new JLabel(formattedName, SwingConstants.CENTER);
         nameLabel.setFont(new Font("Arial", Font.BOLD, 10));
-        spacePanel.add(nameLabel); // GridBagLayout centers it
+
+        // Add label to the TOP of the space panel
+        spacePanel.add(nameLabel, BorderLayout.NORTH);
 
         int index = spaces.indexOf(space);
         boolean isCorner = index == 0 || index == 10 || index == 20 || index == 30;
@@ -139,11 +143,10 @@ public class GameBoardPanel extends JPanel {
             spacePanel.setBackground(new Color(200, 200, 200)); // default light gray
         }
 
-        // Add "click" behavior
+        // Add mouse click behavior
         spacePanel.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 if (space instanceof PropertySpace propertySpace) {
-                    // If it's a property, show a title deed card panel!
                     JDialog dialog = new JDialog();
                     dialog.setTitle(propertySpace.getName());
                     dialog.setSize(200, 270);
@@ -155,7 +158,6 @@ public class GameBoardPanel extends JPanel {
 
                     dialog.setVisible(true);
                 } else {
-                    // Otherwise, just show a basic message
                     JOptionPane.showMessageDialog(
                             null,
                             "In development...",
@@ -168,6 +170,7 @@ public class GameBoardPanel extends JPanel {
 
         this.add(spacePanel);
     }
+
 
     /**
      * Adds player tokens to the game board at the starting position
@@ -187,6 +190,55 @@ public class GameBoardPanel extends JPanel {
             playerTokens.put(tokenName, tokenLabel);
         }
     }
+
+    /**
+     * adds chance card deck to the GUI display
+     */
+    private void addChanceCard() {
+        JPanel chancePanel = new JPanel(new BorderLayout());
+        int panelSizeW = 100;
+        int panelSizeH = 140;
+        chancePanel.setBounds(300, 350, panelSizeW, panelSizeH); // adjust for center-ish placement
+        chancePanel.setBorder(BorderFactory.createLineBorder(Color.BLACK, 2));
+        chancePanel.setBackground(new Color(255, 204, 0)); // yellowish color
+
+        JLabel label = new JLabel("<html><div style='text-align:center;'>Chance</div></html>", SwingConstants.CENTER);
+        label.setFont(new Font("Arial", Font.BOLD, 16));
+        chancePanel.add(label, BorderLayout.CENTER);
+
+        chancePanel.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                JOptionPane.showMessageDialog(null, "Card will automatically be selected\nwhen landed on space", "Chance", JOptionPane.INFORMATION_MESSAGE);
+            }
+        });
+
+        this.add(chancePanel);
+    }
+
+    /**
+     * adds community chest card deck to the GUI display
+     */
+    private void addCommunityChestCard() {
+        JPanel chestPanel = new JPanel(new BorderLayout());
+        int panelSizeW = 100;
+        int panelSizeH = 140;
+        chestPanel.setBounds(500, 350, panelSizeW, panelSizeH); // adjust for center-ish placement
+        chestPanel.setBorder(BorderFactory.createLineBorder(Color.BLACK, 2));
+        chestPanel.setBackground(new Color(102, 178, 255)); // blueish color
+
+        JLabel label = new JLabel("<html><div style='text-align:center;'>Community<br>Chest</div></html>", SwingConstants.CENTER);
+        label.setFont(new Font("Arial", Font.BOLD, 16));
+        chestPanel.add(label, BorderLayout.CENTER);
+
+        chestPanel.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                JOptionPane.showMessageDialog(null, "Card will automatically be selected\nwhen landed on space", "Community Chest", JOptionPane.INFORMATION_MESSAGE);
+            }
+        });
+
+        this.add(chestPanel);
+    }
+
 
     /**
      * Creates and adds a token to the board
@@ -222,7 +274,7 @@ public class GameBoardPanel extends JPanel {
      * @return Point containing x,y coordinates
      */
     public Point getCoordinatesForPosition(int position) {
-        int constant = 12;
+        int constant = 14;
         int CornerSpaceSize = 82 + constant;
         int horizontalWidth = 64 + constant;
         int verticalHeight = 60 + constant;
@@ -230,21 +282,26 @@ public class GameBoardPanel extends JPanel {
         int x = 82 + constant;
         int y = 0;
 
+        // position == 0 would be "GO", position == 1 would be Med Ave, etc.
         if (position >= 0 && position <= 10) {
             // Top row (0–10)
             x = (position == 0) ? 0 : x + (horizontalWidth * (position - 1));
+            y = y + 26; // shifting tokens down by 26 pixels
         } else if (position > 10 && position <= 20) {
             // Right column (11–20)
             x = x + (horizontalWidth * 9);
             y = CornerSpaceSize + (verticalHeight * (position - 11));
+            y = y + 10;
         } else if (position > 20 && position <= 30) {
             // Bottom row (21–30)
             x = (horizontalWidth * (30 - position));
             y = CornerSpaceSize + (verticalHeight * 9);
+            y = y + 26;
         } else if (position > 30 && position < 40) {
             // Left column (31–39)
             x = 0;
             y = CornerSpaceSize + (verticalHeight * (39 - position));
+            y = y + 10;
         }
 
         // Small offset tweak to center token
