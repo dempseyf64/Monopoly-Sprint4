@@ -34,9 +34,32 @@ public class GUI extends JFrame {
         // Remove the previous content (if any) and prepare for player name input
         getContentPane().removeAll();
 
+        String numPlayersStr = JOptionPane.showInputDialog(
+                this,
+                "Enter number of players (2–8):",
+                "Player Count",
+                JOptionPane.QUESTION_MESSAGE
+        );
+
+        if (numPlayersStr == null) {
+            System.exit(0);  // User cancelled
+        }
+
+        int numPlayers;
+        try {
+            numPlayers = Integer.parseInt(numPlayersStr);
+            if (numPlayers < 2 || numPlayers > 8) {
+                throw new NumberFormatException();
+            }
+        } catch (NumberFormatException e) {
+            JOptionPane.showMessageDialog(this, "Invalid number of players. Exiting...");
+            System.exit(0);
+            return;
+        }
+
         // Collect player names from the custom name entry panel
         List<String> playerNamesList = new ArrayList<>();
-        for (int i = 0; i < 8; i++) { // maximum 8 players
+        for (int i = 0; i < numPlayers; i++) { //max 8 players
             String name = showPlayerNamePanel("Player " + (i + 1));  // Call custom panel for name entry
             if (name == null || name.isEmpty()) {
                 break;
