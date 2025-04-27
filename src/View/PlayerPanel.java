@@ -1,40 +1,54 @@
-/**
- * PlayerPanel.java
-
- * This class represents a panel that displays the player's information, including their name, money, and properties.
-
- * Authored by Collin Cabral-Castro
- */
 package View;
+
+import Model.Player;
+import Model.PropertySpace;
+import Model.Property;
 
 import javax.swing.*;
 import java.awt.*;
 
+/**
+ * PlayerPanel shows a player's name, money, and owned properties.
+ * Updated by Collin Cabral-Castro
+ */
 public class PlayerPanel extends JPanel {
-    public PlayerPanel(String playerName, String playerToken) {
+    private final Player player;
+    private final JLabel moneyLabel;
+    private final JPanel propertyListPanel;
+
+    public PlayerPanel(Player player) {
+        this.player = player;
+
         setLayout(new BorderLayout());
-        JLabel moneyLabel = new JLabel("Money: $1500");
 
-        String tokenImage = "/Images/" + playerToken + "Token.png"; // Assuming token image files are named this way
-        ImageIcon tokenIcon = new ImageIcon(getClass().getResource(tokenImage));
-        if (tokenIcon.getImageLoadStatus() != MediaTracker.COMPLETE) {
-            System.out.println("Error: Token image for " + playerToken + " not found.");
-            tokenIcon = new ImageIcon(getClass().getResource("/Images/DefaultToken.png")); // Fallback image (ensure you have a default image)
-        }
-        JLabel tokenLabel = new JLabel(tokenIcon);
-
-        JPanel props = new JPanel();
-        props.setLayout(new BoxLayout(props, BoxLayout.Y_AXIS));
-        props.add(new JLabel("Mediterranean Avenue (Mortgaged)"));
-        props.add(new JLabel("Baltic Avenue"));
-
-        JPanel namePanel = new JPanel();
-        namePanel.add(new JLabel(playerName));  // Display the player's name
-        namePanel.add(tokenLabel);
-
+        moneyLabel = new JLabel("Money: $" + player.getMoney());
+        moneyLabel.setFont(new Font("Arial", Font.BOLD, 16));
         add(moneyLabel, BorderLayout.NORTH);
-        add(new JScrollPane(props), BorderLayout.CENTER);
 
-        setPreferredSize(new Dimension(300, 500));
+        propertyListPanel = new JPanel();
+        propertyListPanel.setLayout(new BoxLayout(propertyListPanel, BoxLayout.Y_AXIS));
+        JScrollPane scrollPane = new JScrollPane(propertyListPanel);
+
+        add(scrollPane, BorderLayout.CENTER);
+
+        refreshProperties();
+    }
+
+    public void refreshProperties() {
+        propertyListPanel.removeAll();
+
+        for (Property property : player.getProperties()) {
+            if (property instanceof PropertySpace propertySpace) {
+                TitleDeedCardPanel card = new TitleDeedCardPanel(propertySpace);
+                propertyListPanel.add(card);
+                propertyListPanel.add(Box.createRigidArea(new Dimension(0, 10)));
+            }
+        }
+
+        // Update money label
+        moneyLabel.setText("Money: $" + player.getMoney());
+
+        propertyListPanel.revalidate();
+        propertyListPanel.repaint();
     }
 }

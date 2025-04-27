@@ -1,26 +1,39 @@
-/**
- * BankPanel.java
-
- * This class represents the bank panel in the Monopoly game GUI.
- * It displays the bank's properties and allows players to view details about them.
-
- * Authored by Collin Cabral-Castro
- */
-
 package View;
 
-import javax.swing.*;
+import Model.GameBoard;
+import Model.PropertySpace;
+import Model.Space;
 
+import javax.swing.*;
+import java.awt.*;
+
+/**
+ * BankPanel displays all properties currently owned by the bank.
+ * Updated by Collin Cabral-Castro
+ */
 public class BankPanel extends JPanel {
-    public BankPanel() {
+    private final GameBoard gameBoard;
+
+    public BankPanel(GameBoard gameBoard) {
+        this.gameBoard = gameBoard;
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
-        // Example card preview button
-        JButton mediterraneanBtn = new JButton("Mediterranean Avenue");
-        mediterraneanBtn.addActionListener(e -> showCardDetails("Mediterranean Avenue"));
-        add(mediterraneanBtn);
+
+        refreshProperties();
     }
 
-    private void showCardDetails(String propertyName) {
-        JOptionPane.showMessageDialog(this, propertyName + " Info here.");
+    // This method refreshes the list of properties shown
+    public void refreshProperties() {
+        removeAll();
+
+        for (Space space : gameBoard.getSpaces()) {
+            if (space instanceof PropertySpace property && !property.isOwned()) {
+                TitleDeedCardPanel card = new TitleDeedCardPanel(property);
+                add(card);
+                add(Box.createRigidArea(new Dimension(0, 10))); // Adds a little spacing
+            }
+        }
+
+        revalidate();
+        repaint();
     }
 }

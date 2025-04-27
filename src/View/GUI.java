@@ -14,6 +14,8 @@ import java.util.List;
  */
 public class GUI extends JFrame {
     private final DicePanel dicePanel;
+    private BankPanel bankPanel;
+    private List<PlayerPanel> playerPanels;
 
     public GUI() {
         setTitle("Monopoly Game");
@@ -99,12 +101,18 @@ public class GUI extends JFrame {
         turnPanel.add(actionButtonsPanel, BorderLayout.CENTER);
 
         tabbedPane.addTab("Your Turn", turnPanel);
-        tabbedPane.addTab("Bank", new JPanel());
+        bankPanel = new BankPanel(sharedGameBoard);
+        tabbedPane.addTab("Bank", new JScrollPane(bankPanel));
 
-        // Add a PlayerPanel for each player in the game
+        playerPanels = new ArrayList<>();
+
         for (int i = 0; i < playerNames.length; i++) {
-            tabbedPane.addTab(playerNames[i], new PlayerPanel(playerNames[i], playerTokens[i]));
+            Player player = sharedGameBoard.getPlayers().get(i);
+            PlayerPanel playerPanel = new PlayerPanel(player);
+            playerPanels.add(playerPanel);
+            tabbedPane.addTab(player.getName(), new JScrollPane(playerPanel));
         }
+
 
         tabbedPane.setPreferredSize(new Dimension(300, 900));
         tabbedPane.setBackground(new Color(217, 233, 211));
