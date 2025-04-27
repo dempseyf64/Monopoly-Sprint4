@@ -142,12 +142,27 @@ public class GameBoardPanel extends JPanel {
         // Add "click" behavior
         spacePanel.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
-                JDialog dialog = new JDialog();
-                dialog.setTitle(space.getName());
-                dialog.setSize(300, 200);
-                dialog.setLocationRelativeTo(null);
-                dialog.add(new JLabel("<html><center>Details about " + space.getName() + "</center></html>", SwingConstants.CENTER));
-                dialog.setVisible(true);
+                if (space instanceof PropertySpace propertySpace) {
+                    // If it's a property, show a title deed card panel!
+                    JDialog dialog = new JDialog();
+                    dialog.setTitle(propertySpace.getName());
+                    dialog.setSize(200, 270);
+                    dialog.setLocationRelativeTo(null);
+                    dialog.setResizable(false);
+
+                    TitleDeedCardPanel cardPanel = new TitleDeedCardPanel(propertySpace);
+                    dialog.add(cardPanel);
+
+                    dialog.setVisible(true);
+                } else {
+                    // Otherwise, just show a basic message
+                    JOptionPane.showMessageDialog(
+                            null,
+                            "In development...",
+                            space.getName(),
+                            JOptionPane.INFORMATION_MESSAGE
+                    );
+                }
             }
         });
 
