@@ -170,7 +170,7 @@ public class GUI extends JFrame {
         }
 
 
-        tabbedPane.setPreferredSize(new Dimension(300, 900));
+        tabbedPane.setPreferredSize(new Dimension(600, 900));
         tabbedPane.setBackground(new Color(217, 233, 211));
         add(tabbedPane, BorderLayout.EAST);
 

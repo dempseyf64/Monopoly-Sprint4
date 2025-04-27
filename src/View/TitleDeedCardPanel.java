@@ -14,7 +14,7 @@ public class TitleDeedCardPanel extends JPanel {
         setLayout(new BorderLayout());
         setBorder(BorderFactory.createLineBorder(Color.BLACK, 2));
         setBackground(Color.WHITE);
-
+        setPreferredSize(new Dimension(180, 250)); // width, height
         // Top colored banner
         JPanel colorBanner = new JPanel();
         colorBanner.setBackground(getColorFromGroup(property.getColorGroup()));

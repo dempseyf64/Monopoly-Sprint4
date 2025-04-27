@@ -16,7 +16,7 @@ public class BankPanel extends JPanel {
 
     public BankPanel(GameBoard gameBoard) {
         this.gameBoard = gameBoard;
-        setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+        setLayout(new GridLayout(0, 2, 10, 10));
 
         refreshProperties();
     }
@@ -29,7 +29,6 @@ public class BankPanel extends JPanel {
             if (space instanceof PropertySpace property && !property.isOwned()) {
                 TitleDeedCardPanel card = new TitleDeedCardPanel(property);
                 add(card);
-                add(Box.createRigidArea(new Dimension(0, 10))); // Adds a little spacing
             }
         }
 
