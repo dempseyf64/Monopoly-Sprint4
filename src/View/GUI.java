@@ -31,12 +31,11 @@ public class GUI extends JFrame {
     }
 
     private void startGame() {
-        // Remove the previous content (if any) and prepare for player name input
         getContentPane().removeAll();
 
         String numPlayersStr = JOptionPane.showInputDialog(
                 this,
-                "Enter number of players (2–8):",
+                "Enter number of players (2–8). If you want to play Against a Computer press 1:",
                 "Player Count",
                 JOptionPane.QUESTION_MESSAGE
         );
@@ -48,7 +47,7 @@ public class GUI extends JFrame {
         int numPlayers;
         try {
             numPlayers = Integer.parseInt(numPlayersStr);
-            if (numPlayers < 2 || numPlayers > 8) {
+            if (numPlayers < 1 || numPlayers > 8) { // Allow 1 player for this case
                 throw new NumberFormatException();
             }
         } catch (NumberFormatException e) {
@@ -57,96 +56,88 @@ public class GUI extends JFrame {
             return;
         }
 
-        // Collect player names from the custom name entry panel
         List<String> playerNamesList = new ArrayList<>();
-        for (int i = 0; i < numPlayers; i++) { //max 8 players
-            String name = showPlayerNamePanel("Player " + (i + 1));  // Call custom panel for name entry
+        for (int i = 0; i < numPlayers; i++) {
+            String name = showPlayerNamePanel("Player " + (i + 1));
             if (name == null || name.isEmpty()) {
                 break;
             }
-            playerNamesList.add(name);  // Store the entered name
+            playerNamesList.add(name);
         }
 
-        // Check if there are less than 2 players
-        if (playerNamesList.size() < 2) {
-            JOptionPane.showMessageDialog(this, "Game canceled (must have at least 2 players).", "Cancel", JOptionPane.INFORMATION_MESSAGE);
-            System.exit(0);  // Exit the application
+        if (playerNamesList.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Game canceled (must have at least 1 player).", "Cancel", JOptionPane.INFORMATION_MESSAGE);
+            System.exit(0);
             return;
         }
 
-        // Convert the list to an array
-        String[] playerNames = playerNamesList.toArray(new String[0]);
-
-        // Initialize game board
         GameBoard sharedGameBoard = new GameBoard(new ArrayList<>(), false, new Bank(new ArrayList<>()));
-        String[] playerTokens = new String[playerNames.length];
+        String[] playerTokens = new String[playerNamesList.size() + (playerNamesList.size() == 1 ? 1 : 0)];
         List<String> availableTokens = sharedGameBoard.getAvailableTokens();
 
-        // Assign tokens to players using the token selection popup
-        for (int i = 0; i < playerNames.length; i++) {
-            String selectedToken = showTokenSelectionPopup(playerNames[i], availableTokens);
+        for (int i = 0; i < playerNamesList.size(); i++) {
+            String selectedToken = showTokenSelectionPopup(playerNamesList.get(i), availableTokens);
             if (selectedToken == null) {
                 JOptionPane.showMessageDialog(this, "Token selection was cancelled for Player " + (i + 1), "Error", JOptionPane.ERROR_MESSAGE);
                 return;
             }
             playerTokens[i] = selectedToken;
-            availableTokens.remove(selectedToken); // Avoid token duplicates
+            availableTokens.remove(selectedToken);
         }
 
-        // Create players
-        for (int i = 0; i < playerNames.length; i++) {
-            Player player = new Player(playerNames[i], playerTokens[i], sharedGameBoard);
+        // Ensure the human player is added first
+        for (int i = 0; i < playerNamesList.size(); i++) {
+            Player player = new Player(playerNamesList.get(i), playerTokens[i], sharedGameBoard);
             sharedGameBoard.getPlayers().add(player);
         }
 
-        // Create game board panel and add it to the frame
+        // Add the computer player if there is only one human player
+        if (playerNamesList.size() == 1) {
+            String computerToken = availableTokens.get(0); // Assign the first available token to the computer
+            playerTokens[1] = computerToken;
+            availableTokens.remove(computerToken);
+            ComputerPlayer computerPlayer = new ComputerPlayer("Computer", computerToken, sharedGameBoard);
+            sharedGameBoard.getPlayers().add(computerPlayer);
+        }
+
         gameBoardPanel = new GameBoardPanel(sharedGameBoard, playerTokens);
         add(gameBoardPanel, BorderLayout.CENTER);
 
-        // Set up tabs and other UI components
         JTabbedPane tabbedPane = new JTabbedPane();
-
-        // Create a panel for the "Your Turn" tab with dice and action buttons
         JPanel turnPanel = new JPanel(new BorderLayout());
         dicePanel = new DicePanel(sharedGameBoard, gameBoardPanel);
         turnPanel.add(dicePanel, BorderLayout.NORTH);
 
-        // Create panel for action buttons
         JPanel actionButtonsPanel = new JPanel();
         actionButtonsPanel.setLayout(new GridLayout(5, 1, 0, 10));
         actionButtonsPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
         Font buttonFont = new Font("Arial", Font.BOLD, 16);
-
-// Create buttons
         JButton endTurnButton = new JButton("End Turn");
         JButton buyHouseButton = new JButton("Buy House");
         JButton buyHotelButton = new JButton("Buy Hotel");
         JButton mortgageButton = new JButton("Mortgage Property");
         JButton tradeButton = new JButton("Start Trade");
 
-// Set font for all buttons
         endTurnButton.setFont(buttonFont);
+        endTurnButton.addActionListener(e -> {
+            Player currentPlayer = dicePanel.getGameBoard().getPlayers().get(dicePanel.getCurrentPlayerIndex());
+
+            // Disable the button if it's the computer's turn
+            if (currentPlayer instanceof ComputerPlayer) {
+                JOptionPane.showMessageDialog(this, "It's the computer's turn. Please wait.");
+                return;
+            }
+
+            // Call the endTurn logic from DicePanel
+            dicePanel.endTurn();
+        });
+        actionButtonsPanel.add(endTurnButton);
         buyHouseButton.setFont(buttonFont);
         buyHotelButton.setFont(buttonFont);
         mortgageButton.setFont(buttonFont);
         tradeButton.setFont(buttonFont);
 
-// Add action listeners
-        endTurnButton.addActionListener(e -> {
-            int currentPlayerIndex = dicePanel.getCurrentPlayerIndex();
-            int nextPlayerIndex = (currentPlayerIndex + 1) % sharedGameBoard.getPlayers().size();
-            dicePanel.setCurrentPlayerIndex(nextPlayerIndex);
-            // No need to explicitly enable the roll button as setCurrentPlayerIndex does this
-            System.out.println("Turn ended. Next player: " +
-                    sharedGameBoard.getPlayers().get(nextPlayerIndex).getName());
-        });
-        buyHouseButton.addActionListener(e -> System.out.println("Buy House clicked"));
-        buyHotelButton.addActionListener(e -> System.out.println("Buy Hotel clicked"));
-        mortgageButton.addActionListener(e -> System.out.println("Mortgage Property clicked"));
-        tradeButton.addActionListener(e -> System.out.println("Start Trade clicked"));
-
-// Add buttons to the panel
         actionButtonsPanel.add(endTurnButton);
         actionButtonsPanel.add(buyHouseButton);
         actionButtonsPanel.add(buyHotelButton);
@@ -154,21 +145,17 @@ public class GUI extends JFrame {
         actionButtonsPanel.add(tradeButton);
 
         turnPanel.add(actionButtonsPanel, BorderLayout.CENTER);
-
         tabbedPane.addTab("Your Turn", turnPanel);
         bankPanel = new BankPanel(sharedGameBoard);
         tabbedPane.addTab("Bank", new JScrollPane(bankPanel));
 
         playerPanels = new ArrayList<>();
-
-        // Add Player Panels
-        for (int i = 0; i < playerNames.length; i++) {
+        for (int i = 0; i < sharedGameBoard.getPlayers().size(); i++) {
             Player player = sharedGameBoard.getPlayers().get(i);
             PlayerPanel playerPanel = new PlayerPanel(player);
             playerPanels.add(playerPanel);
             tabbedPane.addTab(player.getName(), new JScrollPane(playerPanel));
         }
-
 
         tabbedPane.setPreferredSize(new Dimension(600, 900));
         tabbedPane.setBackground(new Color(217, 233, 211));
