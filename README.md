@@ -23,10 +23,10 @@ This project is a digital implementation of the classic Monopoly board game, dev
 - **ViewTests**: Includes JUnit test cases for testing the GUI and game logic.
 
 ## How to Run
-1. Clone the repository to your local machine.
+1. Clone the repository to your local machine. "git clone `paste url here`"
 2. Ensure you have Java, Maven, and SDK 23.0.2 installed.
 3. Build the project using Maven (run.sh) will do this
-4. `sh run.sh` will run the program
+4. `sh run.sh` will run the program as a script doing the commands for you. 
 
 ## UML Diagram
 ![UML PDF](https://github.com/grigolir/CMonopolyProject-Sprint-3/blob/main/UML%20Sprint%203.png)
