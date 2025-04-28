@@ -16,6 +16,7 @@
 
     <build>
         <sourceDirectory>src</sourceDirectory>
+        <testSourceDirectory>tests</testSourceDirectory> <!-- Updated to include the tests directory -->
 
         <resources>
             <resource>
@@ -50,7 +51,7 @@
                     <archive>
                         <manifest>
                             <addClasspath>true</addClasspath>
-                            <mainClass>View.GUI</mainClass> <!-- 👈 Entry point -->
+                            <mainClass>View.GUI</mainClass> <!-- Entry point -->
                         </manifest>
                     </archive>
                 </configuration>
