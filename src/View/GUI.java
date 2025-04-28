@@ -19,6 +19,8 @@ public class GUI extends JFrame {
     private List<PlayerPanel> playerPanels;
     private GameBoardPanel gameBoardPanel;
     private GameBoard sharedGameBoard;
+    private JButton endTurnButton;
+
 
     public GUI() {
         setTitle("Monopoly Game");
@@ -33,33 +35,39 @@ public class GUI extends JFrame {
     }
 
     private void startGame() {
-        // Remove the previous content (if any) and prepare for player name input
+        // Remove the previous content (if any) and prepare for game mode selection
         getContentPane().removeAll();
 
-        String numPlayersStr = JOptionPane.showInputDialog(
+        // Prompt the user to select the game mode
+        String[] options = {"Quick Game (vs Computer)", "Regular Game (with Friends)"};
+        int gameMode = JOptionPane.showOptionDialog(
                 this,
-                "Enter number of players (2–8):",
-                "Player Count",
-                JOptionPane.QUESTION_MESSAGE
+                "Select Game Mode:",
+                "Game Mode Selection",
+                JOptionPane.DEFAULT_OPTION,
+                JOptionPane.QUESTION_MESSAGE,
+                null,
+                options,
+                options[0]
         );
 
-        if (numPlayersStr == null) {
-            System.exit(0);  // User cancelled
+        if (gameMode == -1) {
+            System.exit(0); // User cancelled
         }
 
-        int numPlayers;
-        try {
-            numPlayers = Integer.parseInt(numPlayersStr);
-            if (numPlayers < 2 || numPlayers > 8) {
-                throw new NumberFormatException();
-            }
-        } catch (NumberFormatException e) {
-            JOptionPane.showMessageDialog(this, "Invalid number of players. Exiting...");
-            System.exit(0);
-            return;
+        if (gameMode == 0) {
+            // Quick Game with Computer
+            quickGame();
+        } else {
+            // Regular Game with Friends
+            regularGame();
         }
 
-        Bank bank = new Bank(new ArrayList<>()); // empty for now
+        setVisible(true);
+    }
+
+    private void quickGame() {
+        bank = new Bank(new ArrayList<>()); // Assign to the GUI's bank field
         sharedGameBoard = new GameBoard(new ArrayList<>(), false, bank);
 
         // After GameBoard initializes all spaces
@@ -73,33 +81,95 @@ public class GUI extends JFrame {
         // Now set the bank’s list of properties
         bank.setProperties(propertyList);
 
-
-        // Collect player names from the custom name entry panel
-        List<String> playerNamesList = new ArrayList<>();
-        for (int i = 0; i < numPlayers; i++) { //max 8 players
-            String name = showPlayerNamePanel("Player " + (i + 1));  // Call custom panel for name entry
-            if (name == null || name.isEmpty()) {
-                break;
-            }
-            playerNamesList.add(name);  // Store the entered name
-        }
-
-        // Check if there are less than 2 players
-        if (playerNamesList.size() < 2) {
-            JOptionPane.showMessageDialog(this, "Game canceled (must have at least 2 players).", "Cancel", JOptionPane.INFORMATION_MESSAGE);
-            System.exit(0);  // Exit the application
+        // Create one human player and one computer player
+        String humanPlayerName = showPlayerNamePanel("Player 1");
+        if (humanPlayerName == null || humanPlayerName.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Game canceled.", "Cancel", JOptionPane.INFORMATION_MESSAGE);
+            System.exit(0);
             return;
         }
 
-        // Convert the list to an array
-        String[] playerNames = playerNamesList.toArray(new String[0]);
+        String humanPlayerToken = showTokenSelectionPopup(humanPlayerName, sharedGameBoard.getAvailableTokens());
+        if (humanPlayerToken == null) {
+            JOptionPane.showMessageDialog(this, "Token selection was cancelled.", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        Player humanPlayer = new Player(humanPlayerName, humanPlayerToken, sharedGameBoard);
+        humanPlayer.setPlayerIndex(0);
+        sharedGameBoard.getPlayers().add(humanPlayer);
+
+        String computerPlayerName = "Computer";
+        String computerPlayerToken = sharedGameBoard.getAvailableTokens().get(0); // Assign the first available token
+        ComputerPlayer computerPlayer = new ComputerPlayer(computerPlayerName, computerPlayerToken, sharedGameBoard);
+        computerPlayer.setPlayerIndex(1);
+        sharedGameBoard.getPlayers().add(computerPlayer);
+
+        // Create game board panel and add it to the frame
+        gameBoardPanel = new GameBoardPanel(sharedGameBoard, new String[]{humanPlayerToken, computerPlayerToken});
+        add(gameBoardPanel, BorderLayout.CENTER);
+
+        setupGameUI();
+    }
+
+    private void regularGame() {
+        bank = new Bank(new ArrayList<>()); // Assign to the GUI's bank field
+        sharedGameBoard = new GameBoard(new ArrayList<>(), false, bank);
+
+        // After GameBoard initializes all spaces
+        List<Property> propertyList = new ArrayList<>();
+        for (Space space : sharedGameBoard.getSpaces()) {
+            if (space instanceof Property property) {
+                propertyList.add(property);
+            }
+        }
+
+        // Now set the bank’s list of properties
+        bank.setProperties(propertyList);
+
+        // Ask the user for the number of players
+        String numPlayersStr = JOptionPane.showInputDialog(
+                this,
+                "Enter the number of players (2–8):",
+                "Player Count",
+                JOptionPane.QUESTION_MESSAGE
+        );
+
+        if (numPlayersStr == null || numPlayersStr.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Game canceled.", "Cancel", JOptionPane.INFORMATION_MESSAGE);
+            System.exit(0);
+            return;
+        }
+
+        int numPlayers;
+        try {
+            numPlayers = Integer.parseInt(numPlayersStr);
+            if (numPlayers < 2 || numPlayers > 8) {
+                throw new NumberFormatException();
+            }
+        } catch (NumberFormatException e) {
+            JOptionPane.showMessageDialog(this, "Invalid number of players. Please enter a number between 2 and 8.", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        // Collect player names
+        String[] playerNames = new String[numPlayers];
+        for (int i = 0; i < numPlayers; i++) {
+            String name = showPlayerNamePanel("Player " + (i + 1));
+            if (name == null || name.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Game canceled.", "Cancel", JOptionPane.INFORMATION_MESSAGE);
+                System.exit(0);
+                return;
+            }
+            playerNames[i] = name;
+        }
 
         // Initialize game board
-        String[] playerTokens = new String[playerNames.length];
+        String[] playerTokens = new String[numPlayers];
         List<String> availableTokens = sharedGameBoard.getAvailableTokens();
 
         // Assign tokens to players using the token selection popup
-        for (int i = 0; i < playerNames.length; i++) {
+        for (int i = 0; i < numPlayers; i++) {
             String selectedToken = showTokenSelectionPopup(playerNames[i], availableTokens);
             if (selectedToken == null) {
                 JOptionPane.showMessageDialog(this, "Token selection was cancelled for Player " + (i + 1), "Error", JOptionPane.ERROR_MESSAGE);
@@ -110,7 +180,7 @@ public class GUI extends JFrame {
         }
 
         // Create players
-        for (int i = 0; i < playerNames.length; i++) {
+        for (int i = 0; i < numPlayers; i++) {
             Player player = new Player(playerNames[i], playerTokens[i], sharedGameBoard);
             player.setPlayerIndex(i);
             sharedGameBoard.getPlayers().add(player);
@@ -120,6 +190,10 @@ public class GUI extends JFrame {
         gameBoardPanel = new GameBoardPanel(sharedGameBoard, playerTokens);
         add(gameBoardPanel, BorderLayout.CENTER);
 
+        setupGameUI();
+    }
+
+    private void setupGameUI() {
         // Set up tabs and other UI components
         JTabbedPane tabbedPane = new JTabbedPane();
 
@@ -135,40 +209,30 @@ public class GUI extends JFrame {
 
         Font buttonFont = new Font("Arial", Font.BOLD, 16);
 
-// Create buttons
-        JButton endTurnButton = new JButton("End Turn");
+        // Assign the class-level endTurnButton field
+        endTurnButton = new JButton("End Turn");
+        endTurnButton.setFont(buttonFont);
+        endTurnButton.addActionListener(e -> {
+            int currentPlayerIndex = dicePanel.getCurrentPlayerIndex();
+            int nextPlayerIndex = (currentPlayerIndex + 1) % sharedGameBoard.getPlayers().size();
+            dicePanel.setCurrentPlayerIndex(nextPlayerIndex);
+            System.out.println("Turn ended. Next player: " +
+                    sharedGameBoard.getPlayers().get(nextPlayerIndex).getName());
+        });
+
+        // Add other buttons
         JButton buyHouseButton = new JButton("Buy House");
         JButton buyHotelButton = new JButton("Buy Hotel");
         JButton mortgageButton = new JButton("Mortgage Property");
         JButton tradeButton = new JButton("Start Trade");
 
-// Set font for all buttons
-        endTurnButton.setFont(buttonFont);
+        // Set font for all buttons
         buyHouseButton.setFont(buttonFont);
         buyHotelButton.setFont(buttonFont);
         mortgageButton.setFont(buttonFont);
         tradeButton.setFont(buttonFont);
 
-// Add action listeners
-        endTurnButton.addActionListener(e -> {
-            int currentPlayerIndex = dicePanel.getCurrentPlayerIndex();
-            int nextPlayerIndex = (currentPlayerIndex + 1) % sharedGameBoard.getPlayers().size();
-            dicePanel.setCurrentPlayerIndex(nextPlayerIndex);
-            // No need to explicitly enable the roll button as setCurrentPlayerIndex does this
-            System.out.println("Turn ended. Next player: " +
-                    sharedGameBoard.getPlayers().get(nextPlayerIndex).getName());
-        });
-        buyHouseButton.addActionListener(e -> {
-            Player currentPlayer = sharedGameBoard.getPlayers().get(dicePanel.getCurrentPlayerIndex());
-            buyHouse(currentPlayer);
-        });
-
-        buyHouseButton.addActionListener(e -> System.out.println("Buy House clicked"));
-        buyHotelButton.addActionListener(e -> System.out.println("Buy Hotel clicked"));
-        mortgageButton.addActionListener(e -> System.out.println("Mortgage Property clicked"));
-        tradeButton.addActionListener(e -> System.out.println("Start Trade clicked"));
-
-// Add buttons to the panel
+        // Add buttons to the panel
         actionButtonsPanel.add(endTurnButton);
         actionButtonsPanel.add(buyHouseButton);
         actionButtonsPanel.add(buyHotelButton);
@@ -189,13 +253,16 @@ public class GUI extends JFrame {
             tabbedPane.addTab(player.getName(), new JScrollPane(playerPanel));
         }
 
-
         tabbedPane.setPreferredSize(new Dimension(600, 900));
         tabbedPane.setBackground(new Color(217, 233, 211));
         add(tabbedPane, BorderLayout.EAST);
 
         revalidate();
         repaint();
+    }
+
+    public JButton getEndTurnButton() {
+        return endTurnButton;
     }
 
     private JPanel createTurnPanel(GameBoard sharedGameBoard) {
@@ -336,10 +403,11 @@ public class GUI extends JFrame {
             }
         }
     }
-
+    public DicePanel getDicePanel() {
+        return dicePanel;
+    }
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(GUI::new);
     }
 }
-
