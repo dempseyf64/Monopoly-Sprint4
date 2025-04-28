@@ -37,7 +37,7 @@ This project is a digital implementation of the classic Monopoly board game, dev
 ## How to Run
 1. Clone the repository to your local machine:
    ```bash
-   git clone <repository-url>
+   git clone <https://github.com/dempseyf64/Monopoly-Sprint4.git>
    ```
 2. Ensure you have:
    - Java
