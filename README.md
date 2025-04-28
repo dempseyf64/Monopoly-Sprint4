@@ -27,8 +27,7 @@ This project is a digital implementation of the classic Monopoly board game, dev
 2. Ensure you have Java, Maven, and SDK 23.0.2 installed.
 3. Build the project using Maven:
    ```bash
-   mvn test
-   mvn clean install
+   sh run.sh
 
 ## UML Diagram
 ![UML PDF](https://github.com/grigolir/CMonopolyProject-Sprint-3/blob/main/UML%20Sprint%203.png)
