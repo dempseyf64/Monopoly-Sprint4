@@ -40,6 +40,8 @@ public class GameBoardPanel extends JPanel {
             addTokens(selectedPlayerTokens);
         }
 
+        welcomeTitle();
+
         revalidate();
         repaint();
     }
@@ -48,7 +50,7 @@ public class GameBoardPanel extends JPanel {
      * Positions spaces (buttons) around the board
      */
     private void addSpacesToBoard() {
-        int constant = 14; // change this number to change size of tiles
+        int constant = 16; // change this number to change size of tiles
         int CornerSpaceSize = 82 + constant; // width-height for Go, Jail, Free Parking, and Go to Jail spaces
         int horizontalWidth = 64 + constant;
         int horizontalHeight = 82 + constant;
@@ -56,7 +58,7 @@ public class GameBoardPanel extends JPanel {
         int verticalHeight = 60 + constant;
 
         int x = 82 + constant;
-        int y = 0;
+        int y = 24;
 
         // Top row (0–9)
         addSpaceButton(spaces.get(0), 0, y, CornerSpaceSize, CornerSpaceSize); // GO
@@ -124,8 +126,26 @@ public class GameBoardPanel extends JPanel {
         String formattedName = "<html><div style='text-align:center;'>" +
                 space.getName().replace(" ", "<br>") +
                 "</div></html>";
+
         JLabel nameLabel = new JLabel(formattedName, SwingConstants.CENTER);
-        nameLabel.setFont(new Font("Arial", Font.BOLD, 10));
+
+        // Default font and color
+        Font font = new Font("Arial", Font.BOLD, 10);
+        Color color = Color.BLACK;
+
+        // Check if the space is "Go" or "Parking"
+        if (space.getName().equals("Go") || space.getName().equals("Free Parking")) {
+            font = new Font("Souvenir", Font.BOLD, 16);  // Larger, bold font
+            color = Color.RED;  // Set text color to blue
+        }
+
+        if (space.getName().equals("Go To Jail") || space.getName().equals("Jail")) {
+            font = new Font("Souvenir", Font.BOLD, 16);  // Larger, bold font
+            color = Color.BLUE;  // Set text color to blue
+        }
+
+        nameLabel.setFont(font);
+        nameLabel.setForeground(color);  // Set the text color
 
         // Add label to the TOP of the space panel
         spacePanel.add(nameLabel, BorderLayout.NORTH);
@@ -172,6 +192,7 @@ public class GameBoardPanel extends JPanel {
     }
 
 
+
     /**
      * Adds player tokens to the game board at the starting position
      *
@@ -198,12 +219,12 @@ public class GameBoardPanel extends JPanel {
         JPanel chancePanel = new JPanel(new BorderLayout());
         int panelSizeW = 100;
         int panelSizeH = 140;
-        chancePanel.setBounds(300, 350, panelSizeW, panelSizeH); // adjust for center-ish placement
+        chancePanel.setBounds(300, 500, panelSizeW, panelSizeH); // adjust for center-ish placement
         chancePanel.setBorder(BorderFactory.createLineBorder(Color.BLACK, 2));
         chancePanel.setBackground(new Color(255, 204, 0)); // yellowish color
 
         JLabel label = new JLabel("<html><div style='text-align:center;'>Chance</div></html>", SwingConstants.CENTER);
-        label.setFont(new Font("Arial", Font.BOLD, 16));
+        label.setFont(new Font("Souvenir", Font.BOLD, 18));
         chancePanel.add(label, BorderLayout.CENTER);
 
         chancePanel.addMouseListener(new java.awt.event.MouseAdapter() {
@@ -222,12 +243,12 @@ public class GameBoardPanel extends JPanel {
         JPanel chestPanel = new JPanel(new BorderLayout());
         int panelSizeW = 100;
         int panelSizeH = 140;
-        chestPanel.setBounds(500, 350, panelSizeW, panelSizeH); // adjust for center-ish placement
+        chestPanel.setBounds(500, 500, panelSizeW, panelSizeH); // adjust for center-ish placement
         chestPanel.setBorder(BorderFactory.createLineBorder(Color.BLACK, 2));
         chestPanel.setBackground(new Color(102, 178, 255)); // blueish color
 
         JLabel label = new JLabel("<html><div style='text-align:center;'>Community<br>Chest</div></html>", SwingConstants.CENTER);
-        label.setFont(new Font("Arial", Font.BOLD, 16));
+        label.setFont(new Font("Souvenir", Font.BOLD, 14));
         chestPanel.add(label, BorderLayout.CENTER);
 
         chestPanel.addMouseListener(new java.awt.event.MouseAdapter() {
@@ -237,6 +258,30 @@ public class GameBoardPanel extends JPanel {
         });
 
         this.add(chestPanel);
+    }
+
+    private void welcomeTitle() {
+        // Create the title label
+        JLabel label1 = new JLabel("<html><div style='text-align:center;'>Welcome To</div></html>", SwingConstants.CENTER);
+        JLabel label2 = new JLabel("<html><div style='text-align:center;'>Monopoly</div></html>", SwingConstants.CENTER);
+        label1.setFont(new Font("Slabien", Font.BOLD, 30));
+        label2.setFont(new Font("Slabien", Font.BOLD, 50));
+
+        label1.setForeground(Color.black);
+        label2.setForeground(Color.RED);
+
+        // Set the position of the label
+        label1.setBounds(200, 120, 500, 100); // Adjust the position (x, y) and size (width, height)
+        label2.setBounds(200, 160, 500, 100); // Adjust the position (x, y) and size (width, height)
+
+
+        // Add the title label to the game board panel
+        this.add(label1);
+        this.add(label2);
+
+        // Ensure title is on top of other components
+        revalidate();
+        repaint();
     }
 
 
@@ -274,7 +319,7 @@ public class GameBoardPanel extends JPanel {
      * @return Point containing x,y coordinates
      */
     public Point getCoordinatesForPosition(int position) {
-        int constant = 14;
+        int constant = 16;
         int CornerSpaceSize = 82 + constant;
         int horizontalWidth = 64 + constant;
         int verticalHeight = 60 + constant;
@@ -296,12 +341,13 @@ public class GameBoardPanel extends JPanel {
             // Bottom row (21–30)
             x = (horizontalWidth * (30 - position));
             y = CornerSpaceSize + (verticalHeight * 9);
+            x = x + 12;
             y = y + 26;
         } else if (position > 30 && position < 40) {
             // Left column (31–39)
             x = 0;
             y = CornerSpaceSize + (verticalHeight * (39 - position));
-            y = y + 10;
+            y = y + 14;
         }
 
         // Small offset tweak to center token
