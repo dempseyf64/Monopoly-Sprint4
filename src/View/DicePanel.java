@@ -1,9 +1,6 @@
 package View;
 
-import Model.Dice;
-import Model.GameBoard;
-import Model.JailSpace;
-import Model.Player;
+import Model.*;
 
 import javax.swing.*;
 import java.awt.*;
@@ -75,6 +72,16 @@ public class DicePanel extends JPanel {
     private final JailSpace jailSpace;
 
     /**
+     * Reference to the bank object for handling transactions
+     */
+    private final Bank bank;
+
+    /**
+     * Reference to the parent GUI for updating UI components
+     */
+    private final GUI parentGUI;
+
+    /**
      * Gets the current player index
      *
      * @return The index of the current player
@@ -119,9 +126,11 @@ public class DicePanel extends JPanel {
      * @param gameBoard      The game board model containing players and game state
      * @param gameBoardPanel The visual game board panel for updating token positions
      */
-    public DicePanel(GameBoard gameBoard, GameBoardPanel gameBoardPanel) {
+    public DicePanel(GameBoard gameBoard, GameBoardPanel gameBoardPanel, Bank bank, GUI parentGUI) {
         this.gameBoard = gameBoard;
         this.gameBoardPanel = gameBoardPanel;
+        this.bank = bank;
+        this.parentGUI = parentGUI;
         this.dice = Dice.getInstance();
         this.jailSpace = new JailSpace(); // Create the jail space
 
@@ -294,7 +303,7 @@ public class DicePanel extends JPanel {
 
         // Move token on board
         movePlayerToken(currentPlayer, newPosition);
-
+        handleLandingSpace(currentPlayer, newPosition);
         // If doubles, allow player to roll again (unless it's the third double)
         if (isDoubles) {
             JOptionPane.showMessageDialog(this,
@@ -362,5 +371,41 @@ public class DicePanel extends JPanel {
         // Force UI update
         gameBoardPanel.revalidate();
         gameBoardPanel.repaint();
+    }
+
+    private void handleLandingSpace(Player player, int position) {
+        Space space = gameBoard.getSpaces().get(position);
+
+        if (space instanceof PropertySpace propertySpace) {
+            if (!propertySpace.isOwned()) {
+                int response = JOptionPane.showConfirmDialog(
+                        this,
+                        player.getName() + ", would you like to purchase " +
+                                propertySpace.getName() + " for $" + propertySpace.getPrice() + "?",
+                        "Purchase Property",
+                        JOptionPane.YES_NO_OPTION
+                );
+
+                if (response == JOptionPane.YES_OPTION) {
+                    if (player.getMoney() >= propertySpace.getPrice()) {
+                        propertySpace.buy(player);
+                        bank.collectFromPlayer(player, propertySpace.getPrice());
+                        if (parentGUI != null) {
+                            parentGUI.getBankPanel().refreshProperties();
+                            parentGUI.getPlayerPanels().get(player.getPlayerIndex()).refreshProperties();
+                        }
+
+
+                        JOptionPane.showMessageDialog(this,
+                                player.getName() + " purchased " + propertySpace.getName() + "!");
+                    } else {
+                        JOptionPane.showMessageDialog(this,
+                                "You don't have enough money to buy " + propertySpace.getName() + "!",
+                                "Not enough funds",
+                                JOptionPane.ERROR_MESSAGE);
+                    }
+                }
+            }
+        }
     }
 }

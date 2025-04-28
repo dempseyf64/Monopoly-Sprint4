@@ -11,173 +11,96 @@
  */
 package Model;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Scanner;
 
 public class Bank {
-
-    private static final int INITIAL_HOUSES = 32;
-    private static final int INITIAL_HOTELS = 12;
-
-    private int housesRemaining;
-    private int hotelsRemaining;
-    private final List<Property> unownedProperties;
+    private List<Property> properties;
 
     /**
-     * Creates a Bank that starts off with the standard supply
-     * of houses/hotels, and any unowned properties.
+     * Constructs a Bank with an initial list of properties.
      *
-     * @param allProperties The full list of properties in the game (these are initially unowned).
+     * @param properties The list of properties managed by the Bank.
      */
-    public Bank(List<Property> allProperties) {
-        this.housesRemaining = INITIAL_HOUSES;
-        this.hotelsRemaining = INITIAL_HOTELS;
-        this.unownedProperties = new ArrayList<>();
-
-        if (allProperties != null) {
-            for (Property p : allProperties) {
-                if (!p.isOwned()) {
-                    unownedProperties.add(p);
-                }
-            }
-        }
-    }
-
-    public int getHousesRemaining() {
-        return housesRemaining;
-    }
-
-    public int getHotelsRemaining() {
-        return hotelsRemaining;
+    public Bank(List<Property> properties) {
+        this.properties = properties;
     }
 
     /**
-     * Gives a specified amount of money to a Player.
+     * Sets the properties managed by the Bank.
+     * (Useful if properties are initialized later after the Bank is created.)
      *
-     * @param player The player to receive the money.
-     * @param amount The amount of money to give.
+     * @param properties List of Property objects.
      */
-    public void payPlayer(Player player, int amount) {
-        if (player != null && amount > 0) {
-            player.setMoney(player.getMoney() + amount);
-            System.out.println("Bank pays " + player.getName() + " $" + amount);
-        }
+    public void setProperties(List<Property> properties) {
+        this.properties = properties;
     }
 
     /**
-     * Collects a specified amount of money from a Player.
+     * Collects a payment from a player.
      *
-     * @param player The player to collect money from.
-     * @param amount The amount of money to collect.
+     * @param player The player paying the money.
+     * @param amount The amount to collect.
      */
     public void collectFromPlayer(Player player, int amount) {
-        if (player != null && amount > 0) {
-            player.setMoney(player.getMoney() - amount);
-            System.out.println("Bank collects $" + amount + " from " + player.getName());
-        }
+        player.setMoney(player.getMoney() - amount);
+        System.out.println(player.getName() + " paid $" + amount + " to the Bank.");
     }
 
     /**
-     * Sells a property to a player at face value (assuming it is unowned).
+     * Pays money to a player.
      *
-     * @param property The property to sell.
-     * @param buyer The player buying the property.
+     * @param player The player receiving the money.
+     * @param amount The amount to pay.
      */
-    public void sellProperty(Property property, Player buyer) {
-        if (property != null && buyer != null && unownedProperties.contains(property)) {
-            if (buyer.getMoney() >= property.getPrice()) {
-                property.buy(buyer);
-                unownedProperties.remove(property);
-                System.out.println(buyer.getName() + " bought " + property.getName() + " for $" + property.getPrice());
-            } else {
-                System.out.println(buyer.getName() + " cannot afford " + property.getName());
-            }
-        } else {
-            System.out.println("Property is either already owned or invalid.");
-        }
+    public void payPlayer(Player player, int amount) {
+        player.setMoney(player.getMoney() + amount);
+        System.out.println("The Bank paid $" + amount + " to " + player.getName() + ".");
     }
 
     /**
-     * Auctions a property among all players.
+     * Gets the list of properties still owned by the Bank (unowned properties).
      *
-     * @param property The property to auction.
-     * @param players The list of players participating in the auction.
+     * @return List of unowned Property objects.
      */
-    public void auctionProperty(Property property, List<Player> players) {
-        if (property == null || players == null || players.isEmpty()) {
-            System.out.println("Invalid property or players for auction.");
-            return;
-        }
-
-        unownedProperties.remove(property);
-        System.out.println("Starting auction for " + property.getName() + " (Price: $" + property.getPrice() + ")");
-        Scanner scanner = new Scanner(System.in);
-        int highestBid = 0;
-        Player highestBidder = null;
-
-        for (Player player : players) {
-            if (player.getMoney() > 0) {
-                System.out.println(player.getName() + ", enter your bid (0 to skip): ");
-                try {
-                    int bid = Integer.parseInt(scanner.nextLine());
-                    if (bid > highestBid && bid <= player.getMoney()) {
-                        highestBid = bid;
-                        highestBidder = player;
-                    }
-                } catch (NumberFormatException e) {
-                    System.out.println("Invalid bid. Skipping...");
-                }
-            }
-        }
-
-        if (highestBidder != null) {
-            property.buy(highestBidder);
-            System.out.println(highestBidder.getName() + " wins the auction for $" + highestBid + ".");
-        } else {
-            System.out.println("No bids were placed. The property remains with the Bank.");
-            unownedProperties.add(property);
-        }
+    public List<Property> getUnownedProperties() {
+        return properties.stream()
+                .filter(property -> !property.isOwned())
+                .toList();
     }
 
     /**
-     * Mortgages a property (pays the player half its price).
+     * Gets the full list of all properties the Bank knows about.
      *
-     * @param property The property to mortgage.
-     * @param owner The owner of the property.
+     * @return List of all Property objects.
      */
-    public void mortgageProperty(Property property, Player owner) {
-        if (property != null && owner != null && property.getOwner() == owner && !property.isMortgaged()) {
-            property.mortgage();
-            System.out.println(owner.getName() + " mortgaged " + property.getName());
-        } else {
-            System.out.println("Cannot mortgage property.");
-        }
+    public List<Property> getAllProperties() {
+        return properties;
     }
 
     /**
-     * Lifts a mortgage from a property if the owner has enough money.
+     * Allows a player to buy a house for a specific property.
      *
-     * @param property The property to unmortgage.
-     * @param owner The owner of the property.
+     * @param player The player buying the house.
+     * @param property The property to build the house on.
+     * @return true if the purchase was successful, false otherwise.
      */
-    public void unmortgageProperty(Property property, Player owner) {
-        if (property != null && owner != null && property.getOwner() == owner && property.isMortgaged()) {
-            property.unmortgage();
-            System.out.println(owner.getName() + " unmortgaged " + property.getName());
+    public boolean buyHouse(Player player, PropertySpace property) {
+        if (property.getHouseCount() >= 4 || property.hasHotel()) {
+            System.out.println("Cannot build more houses on " + property.getName() + ".");
+            return false;
+        }
+
+        int houseCost = property.getCostWithOneHouse(); // Using 1-house cost as house price
+
+        if (player.getMoney() >= houseCost) {
+            player.setMoney(player.getMoney() - houseCost);
+            property.setHouseCount(property.getHouseCount() + 1);
+            System.out.println(player.getName() + " built a house on " + property.getName() + "!");
+            return true;
         } else {
-            System.out.println("Cannot unmortgage property.");
+            System.out.println(player.getName() + " doesn't have enough money to build a house.");
+            return false;
         }
     }
 
-    public void printBankStatus() {
-        System.out.println("\n--- Bank Status ---");
-        System.out.println("Houses remaining: " + housesRemaining);
-        System.out.println("Hotels remaining: " + hotelsRemaining);
-        System.out.println("Unowned properties:");
-        for (Property p : unownedProperties) {
-            System.out.println("   - " + p.getName() + " ($" + p.getPrice() + ")");
-        }
-        System.out.println("-------------------\n");
-    }
 }

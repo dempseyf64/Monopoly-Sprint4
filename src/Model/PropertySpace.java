@@ -3,7 +3,7 @@
  * It extends the Property class and includes additional fields for rent calculations
  * based on the number of houses or hotels on the property.
  *
- * Created by Kristian Wright
+ * Created by Kristian Wright modified by Collin Cabral-Castro
  */
 package Model;
 
@@ -104,5 +104,19 @@ public class PropertySpace extends Property {
 
     public int getCostWithHotel() {
         return costWithHotel;
+    }
+
+    /**
+     * Buys the property for the specified player if it is unowned.
+     *
+     * @param buyer The player buying the property.
+     */
+    @Override
+    public void buy(Player buyer) {
+        if (!isOwned()) {
+            setOwner(buyer);
+            buyer.addProperty(this);
+            System.out.println(buyer.getName() + " bought " + getName() + "!");
+        }
     }
 }

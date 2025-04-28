@@ -13,10 +13,12 @@ import java.util.List;
  * Created by Rachele Grigoli and modified by Kristian Wright and Collin Cabral-Castro
  */
 public class GUI extends JFrame {
+    private Bank bank;
     private  DicePanel dicePanel;
     private BankPanel bankPanel;
     private List<PlayerPanel> playerPanels;
     private GameBoardPanel gameBoardPanel;
+    private GameBoard sharedGameBoard;
 
     public GUI() {
         setTitle("Monopoly Game");
@@ -57,6 +59,21 @@ public class GUI extends JFrame {
             return;
         }
 
+        Bank bank = new Bank(new ArrayList<>()); // empty for now
+        sharedGameBoard = new GameBoard(new ArrayList<>(), false, bank);
+
+        // After GameBoard initializes all spaces
+        List<Property> propertyList = new ArrayList<>();
+        for (Space space : sharedGameBoard.getSpaces()) {
+            if (space instanceof Property property) {
+                propertyList.add(property);
+            }
+        }
+
+        // Now set the bank’s list of properties
+        bank.setProperties(propertyList);
+
+
         // Collect player names from the custom name entry panel
         List<String> playerNamesList = new ArrayList<>();
         for (int i = 0; i < numPlayers; i++) { //max 8 players
@@ -78,7 +95,6 @@ public class GUI extends JFrame {
         String[] playerNames = playerNamesList.toArray(new String[0]);
 
         // Initialize game board
-        GameBoard sharedGameBoard = new GameBoard(new ArrayList<>(), false, new Bank(new ArrayList<>()));
         String[] playerTokens = new String[playerNames.length];
         List<String> availableTokens = sharedGameBoard.getAvailableTokens();
 
@@ -96,6 +112,7 @@ public class GUI extends JFrame {
         // Create players
         for (int i = 0; i < playerNames.length; i++) {
             Player player = new Player(playerNames[i], playerTokens[i], sharedGameBoard);
+            player.setPlayerIndex(i);
             sharedGameBoard.getPlayers().add(player);
         }
 
@@ -108,7 +125,7 @@ public class GUI extends JFrame {
 
         // Create a panel for the "Your Turn" tab with dice and action buttons
         JPanel turnPanel = new JPanel(new BorderLayout());
-        dicePanel = new DicePanel(sharedGameBoard, gameBoardPanel);
+        dicePanel = new DicePanel(sharedGameBoard, gameBoardPanel, bank, this);
         turnPanel.add(dicePanel, BorderLayout.NORTH);
 
         // Create panel for action buttons
@@ -141,6 +158,11 @@ public class GUI extends JFrame {
             System.out.println("Turn ended. Next player: " +
                     sharedGameBoard.getPlayers().get(nextPlayerIndex).getName());
         });
+        buyHouseButton.addActionListener(e -> {
+            Player currentPlayer = sharedGameBoard.getPlayers().get(dicePanel.getCurrentPlayerIndex());
+            buyHouse(currentPlayer);
+        });
+
         buyHouseButton.addActionListener(e -> System.out.println("Buy House clicked"));
         buyHotelButton.addActionListener(e -> System.out.println("Buy Hotel clicked"));
         mortgageButton.addActionListener(e -> System.out.println("Mortgage Property clicked"));
@@ -159,11 +181,9 @@ public class GUI extends JFrame {
         bankPanel = new BankPanel(sharedGameBoard);
         tabbedPane.addTab("Bank", new JScrollPane(bankPanel));
 
-        playerPanels = new ArrayList<>();
-
         // Add Player Panels
-        for (int i = 0; i < playerNames.length; i++) {
-            Player player = sharedGameBoard.getPlayers().get(i);
+        playerPanels = new ArrayList<>();
+        for (Player player : sharedGameBoard.getPlayers()) {
             PlayerPanel playerPanel = new PlayerPanel(player);
             playerPanels.add(playerPanel);
             tabbedPane.addTab(player.getName(), new JScrollPane(playerPanel));
@@ -180,7 +200,7 @@ public class GUI extends JFrame {
 
     private JPanel createTurnPanel(GameBoard sharedGameBoard) {
         JPanel turnPanel = new JPanel(new BorderLayout());
-        dicePanel = new DicePanel(sharedGameBoard, gameBoardPanel);
+        dicePanel = new DicePanel(sharedGameBoard, gameBoardPanel, bank, this);
         turnPanel.add(dicePanel, BorderLayout.NORTH);
 
         // Action buttons panel (same as your current implementation)
@@ -260,7 +280,66 @@ public class GUI extends JFrame {
         return name;
     }
 
+    public BankPanel getBankPanel() {
+        return bankPanel;
+    }
+
+    public List<PlayerPanel> getPlayerPanels() {
+        return playerPanels;
+    }
+
+
+    /**
+     * Handles buying a house by the current player.
+     * Relies on the Bank to process the purchase.
+     */
+    private void buyHouse(Player player) {
+        List<Property> eligibleProperties = new ArrayList<>();
+
+        for (Property property : player.getProperties()) {
+            if (property instanceof PropertySpace propSpace) {
+                if (propSpace.getHouseCount() < 4 && !propSpace.hasHotel()) {
+                    if (player.ownsFullColorGroup(propSpace.getColorGroup())) {
+                        eligibleProperties.add(propSpace);
+                    }
+                }
+            }
+        }
+
+        if (eligibleProperties.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "No eligible properties to build houses on.", "No Properties", JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+
+        Property selectedProperty = (Property) JOptionPane.showInputDialog(
+                this,
+                "Select a property to build a house:",
+                "Build House",
+                JOptionPane.QUESTION_MESSAGE,
+                null,
+                eligibleProperties.toArray(),
+                eligibleProperties.get(0)
+        );
+
+        if (selectedProperty == null) {
+            return; // Cancelled
+        }
+
+        if (selectedProperty instanceof PropertySpace propSpace) {
+            boolean success = bank.buyHouse(player, propSpace);
+            if (success) {
+                JOptionPane.showMessageDialog(this, "Built a house on " + propSpace.getName() + "!");
+                bankPanel.refreshProperties();
+                playerPanels.get(player.getPlayerIndex()).refreshProperties();
+            } else {
+                JOptionPane.showMessageDialog(this, "Could not build a house on " + propSpace.getName() + ".", "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
+
+
     public static void main(String[] args) {
         SwingUtilities.invokeLater(GUI::new);
     }
 }
+

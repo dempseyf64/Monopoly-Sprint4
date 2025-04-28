@@ -16,6 +16,7 @@ import java.util.*;
  * properties owned, jail status, and methods to move, go to jail, and manage properties.
  */
 public class Player {
+    private int playerIndex;
     final private String name;
     private String token;
     private int money;
@@ -177,9 +178,7 @@ public class Player {
      *
      * @param property the property to add
      */
-    public void addProperty(Property property) {
-        properties.add(property);
-    }
+    public void addProperty(Property property) {properties.add(property);}
 
     /**
      * Returns the list of properties owned by the player.
@@ -198,4 +197,37 @@ public class Player {
     public Dice getDice() {
         return dice;
     }
+
+    public void setPlayerIndex(int index) {
+        this.playerIndex = index;
+    }
+
+    public int getPlayerIndex() {
+        return playerIndex;
+    }
+    public void adjustMoney(int amount) {
+        this.money += amount;
+    }
+
+    /**
+     * Checks if the player owns all properties of a specific color group.
+     */
+    public boolean ownsFullColorGroup(String colorGroup) {
+        int totalInGroup = 0;
+        int ownedInGroup = 0;
+
+        for (Space space : gameBoard.getSpaces()) {
+            if (space instanceof PropertySpace propSpace) {
+                if (propSpace.getColorGroup().equalsIgnoreCase(colorGroup)) {
+                    totalInGroup++;
+                    if (propSpace.getOwner() == this) {
+                        ownedInGroup++;
+                    }
+                }
+            }
+        }
+
+        return totalInGroup > 0 && totalInGroup == ownedInGroup;
+    }
+
 }

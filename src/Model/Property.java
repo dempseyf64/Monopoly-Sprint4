@@ -239,4 +239,6 @@ public class Property extends Space {
             System.out.println(player.getName() + " landed on their own property " + name + ".");
         }
     }
+
+
 }

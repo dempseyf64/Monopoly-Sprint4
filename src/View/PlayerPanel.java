@@ -9,7 +9,7 @@ import java.awt.*;
 
 /**
  * PlayerPanel shows a player's name, money, and owned properties.
- * Updated by Collin Cabral-Castro
+ * Created by Collin Cabral-Castro
  */
 public class PlayerPanel extends JPanel {
     private final Player player;
