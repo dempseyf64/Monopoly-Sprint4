@@ -1,6 +1,10 @@
 # Monopoly-Project Sprint 4
 Monopoly Project For CSCI 234. 
 
+### CI Status
+
+[![Maven](https://github.com/dempseyf64/Monopoly-Sprint4/actions/workflows/maven-checklist.yml/badge.svg)](https://github.com/dempseyf64/Monopoly-Sprint4/actions/workflows/maven-checklist.yml)
+
 Authors: Finn Dempsey, Kristian Wright, Collin Cabral-Castro, Rachele Grigoli
 
 [**BurnDown Chart**](https://moravian0-my.sharepoint.com/:x:/g/personal/wrightk_moravian_edu/Ec9vbNkXKkBAhebGWkPVn3gBCRMl1tALIvEDojNvpZFdHg?e=RiQ86v)
