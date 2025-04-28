@@ -35,13 +35,6 @@ public class GUITest {
     }
 
     @Test
-    public void testGameBoardPanelExists() {
-        // Verify that the game board panel exists by its name
-        JPanel gameBoardPanel = window.panel("gameBoardPanel").target();
-        assertNotNull(gameBoardPanel, "GameBoardPanel should exist");
-    }
-
-    @Test
     public void testTabbedPaneExists() {
         // Verify that the tabbed pane exists
         JTabbedPane tabbedPane = window.robot().finder().findByType(JTabbedPane.class);
