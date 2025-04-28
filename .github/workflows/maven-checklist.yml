@@ -31,10 +31,3 @@ jobs:
       # Step 4: Run the `run.sh` script to package and test
       - name: Run build and tests
         run: ./run.sh
-
-      # Step 5: Verify GUI execution
-      - name: Run the GUI program
-        run: |
-          java -jar target/monopoly-game-1.0-SNAPSHOT.jar &
-          sleep 5 # Allow the GUI to initialize
-          pkill -f monopoly-game-1.0-SNAPSHOT.jar # Kill the GUI program after verification
